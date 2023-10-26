@@ -1,0 +1,17 @@
+{
+  "id": "netmodule.bagen.com.dweb",
+  "name": "netmodule-html",
+  "short_name": "netmodule",
+  "description": "This is a sample application that includes instances of all dweb_plugins components.",
+  "logo": "https://dweb.waterbang.top/icon.png",
+  "images": [
+    "http://qiniu-waterbang.waterbang.top/bfm/cot-home_2058.webp",
+    "http://qiniu-waterbang.waterbang.top/bfm/defi.png",
+    "http://qiniu-waterbang.waterbang.top/bfm/nft.png"
+  ],
+  "author": ["bfs", "bfs@bfs.com"],
+  "version": "1.0.0",
+  "change_log": "Added a new feature of shooting bubbles with a single click!",
+  "home": "https://dweb.waterbang.top",
+  "categories": ["application"]
+}
