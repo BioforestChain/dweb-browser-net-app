@@ -1,4 +1,16 @@
-# Logs
+node_modules
+.DS_Store
+dist
+dist-ssr
+*.local
+coverage
+stats.html
+
+# 包管理器
+# package-lock.json
+# yarn.lock
+
+# 日志
 logs
 *.log
 npm-debug.log*
@@ -7,19 +19,14 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-*.local
+# 压缩包
+*.zip
+*.rar
+*.7z
+*.tar
 
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-!.vscode/settings.json
-.idea
-.DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
+# 全局组件声明
+# 每次启动服务或打包都会生成最新的，所以无需传到 Git 上
+components.d.ts
+auto-import.d.ts
+.eslintrc-auto-import.json

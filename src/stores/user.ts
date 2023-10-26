@@ -1,12 +1,12 @@
 import { defineStore } from 'pinia'
-import { UserInfo } from '#/store'
+import { UserInfo } from '@/types/store'
 
 interface State {
   userInfo: UserInfo
   token: string
 }
 
-const useUserStore = defineStore('userStore', {
+export const useUserStore = defineStore('userStore', {
   state(): State {
     return {
       userInfo: {
@@ -26,5 +26,3 @@ const useUserStore = defineStore('userStore', {
     }
   }
 })
-
-export default useUserStore

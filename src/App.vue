@@ -1,8 +1,14 @@
-<script setup lang="ts">
-// This starter template is using Vue 3 <script setup> SFCs
-// Check out https://vuejs.org/api/sfc-script-setup.html#script-setup
-</script>
-
 <template>
-  <router-view></router-view>
+  <router-view :key="key" />
 </template>
+
+<script setup lang="ts">
+import { isMobile, watchResize } from '@bassist/utils'
+
+const route = useRoute()
+const key = computed(() => `${String(route.name || route.path)}-${new Date()}`)
+
+watchResize(() => {
+  document.body.className = `platform-${isMobile() ? 'mobile' : 'desktop'}`
+})
+</script>

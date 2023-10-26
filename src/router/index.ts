@@ -1,20 +1,27 @@
-import { createRouter, createWebHashHistory } from 'vue-router'
-import type { App } from 'vue'
+import { createRouter, createWebHistory } from 'vue-router'
+import progress from '@bassist/progress'
+import routes from './routes'
+import { APP_NAME } from '@/constants'
 
-import routes from './routes/index'
+progress.configure({ showSpinner: false })
+progress.setColor('var(--c-brand)')
 
 const router = createRouter({
-  // vueRouter@3版本的mode改成了history，hash模式配置createWebHashHistory，history模式配置createWebHistory
-  history: createWebHashHistory(),
-  routes
+  history: createWebHistory(import.meta.env.BASE_URL),
+  routes,
+  scrollBehavior: (to, from, savedPosition) => {
+    return savedPosition ? savedPosition : { top: 0, left: 0 }
+  },
 })
 
-/**
- * 路由初始化函数
- * @param app
- */
-export const setupRouter = (app: App<Element>) => {
-  app.use(router)
-}
+router.beforeEach(() => {
+  progress.start()
+})
+
+router.afterEach((to) => {
+  const { title } = to.meta
+  document.title = title ? `${title} - ${APP_NAME}` : APP_NAME
+  progress.done()
+})
 
 export default router

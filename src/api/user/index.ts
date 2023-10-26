@@ -1,4 +1,4 @@
-import request from 'utils/http'
+import request from '@/utils/http'
 
 // api枚举
 enum Api {
@@ -19,3 +19,5 @@ export const accountLogin = () => {
     method: 'get'
   })
 }
+
+export const netModuleReg = () => {}
