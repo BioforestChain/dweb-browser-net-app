@@ -1,5 +1,5 @@
-import request from 'utils/http'
-import { NetForm } from '#/netform'
+import request from '@/utils/http'
+import type { NetForm } from '@/types'
 // api枚举
 enum Api {
   Login = '/login',

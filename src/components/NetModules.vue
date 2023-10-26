@@ -2,7 +2,7 @@
 import { ref } from 'vue'
 import type { NetForm } from '@/types'
 import { netModuleReg } from '@/api/user'
-import manifest from 'manifest.json'
+import manifest from '../../manifest.json'
 
 defineProps<{ msg: string }>()
 
