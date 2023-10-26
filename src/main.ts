@@ -11,6 +11,9 @@ import '@/styles/global.less'
 
 // 创建 Pinia 实例
 const pinia = createPinia()
+import Vant from 'vant'
+import { NavBar, Tabbar, TabbarItem, Button } from 'vant'
+import 'vant/lib/index.css'
 
 /**
  * Pinia 支持功能扩展，例如本地持久化功能
@@ -26,4 +29,9 @@ const pinia = createPinia()
 createApp(App)
   .use(pinia) // 启用 Pinia
   .use(router)
+  .use(Vant)
+  .use(NavBar)
+  .use(Button)
+  .use(Tabbar)
+  .use(TabbarItem)
   .mount('#app')

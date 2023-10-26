@@ -1,13 +1,19 @@
-import request from '@/utils/http'
-
+import request from 'utils/http'
+import { NetForm } from '#/netform'
 // api枚举
 enum Api {
-  Login = '/login'
+  Login = '/login',
+  NetModuleReg = '/proxy/user/net-module-reg',
 }
 
 // 用户信息
 interface UserInfo {
   userName: string
+}
+interface NetModuleRegInfo {
+  domain: string
+  net_id: string
+  secret: string
 }
 
 /**
@@ -16,8 +22,14 @@ interface UserInfo {
 export const accountLogin = () => {
   return request<UserInfo>({
     url: Api.Login,
-    method: 'get'
+    method: 'get',
   })
 }
 
-export const netModuleReg = () => {}
+export const netModuleReg = (values: NetForm[]) => {
+  return request<NetModuleRegInfo>({
+    url: Api.NetModuleReg,
+    method: 'post',
+    data: values,
+  })
+}
