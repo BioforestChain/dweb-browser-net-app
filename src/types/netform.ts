@@ -4,3 +4,9 @@ export interface NetForm {
   rootDomain: string
   secret: string
 }
+
+export interface NetModuleRegInfo {
+  domain: string
+  net_id: string
+  secret: string
+}
