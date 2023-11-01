@@ -9,9 +9,14 @@
     "http://qiniu-waterbang.waterbang.top/bfm/defi.png",
     "http://qiniu-waterbang.waterbang.top/bfm/nft.png"
   ],
-  "author": ["bfs", "bfs@bfs.com"],
+  "author": [
+    "bfs",
+    "bfs@bfs.com"
+  ],
   "version": "1.0.0",
   "change_log": "Added a new feature of shooting bubbles with a single click!",
   "home": "https://dweb.waterbang.top",
-  "categories": ["application"]
+  "categories": [
+    "application"
+  ]
 }

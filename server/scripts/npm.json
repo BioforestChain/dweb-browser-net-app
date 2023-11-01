@@ -1,0 +1,15 @@
+[
+  {
+    "buildFromRootDir": "./src/index.ts",
+    "mainExports": ".",
+    "buildToRootDir": "./build/",
+    "watchDir": "./src/index.ts",
+    "denoShim": false,
+    "name": "@plaoc/tunnel",
+    "version": "0.0.1",
+    "lib": [
+      "ES2022",
+      "DOM"
+    ]
+  }
+]

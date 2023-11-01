@@ -12,7 +12,7 @@ import '@/styles/global.less'
 // 创建 Pinia 实例
 const pinia = createPinia()
 import Vant from 'vant'
-import { NavBar, Tabbar, TabbarItem, Button } from 'vant'
+import { NavBar, Tabbar, TabbarItem, Button, List } from 'vant'
 import 'vant/lib/index.css'
 
 /**
@@ -32,6 +32,7 @@ createApp(App)
   .use(Vant)
   .use(NavBar)
   .use(Button)
+  .use(List)
   .use(Tabbar)
   .use(TabbarItem)
   .mount('#app')

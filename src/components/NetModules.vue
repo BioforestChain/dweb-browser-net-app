@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import type { NetForm } from '@/types'
-import { netModuleReg } from '@/api/user'
+import { apiNetModuleReg } from '@/api/user'
 import manifest from '../../manifest.json'
 
 defineProps<{ msg: string }>()
@@ -38,12 +38,12 @@ const patternRootDomain = (val: string) => {
 }
 // const patternRootDomain = (val:string) => /^[0-9]+$/.test(val);
 
-const domain = /^[a-z0-9]+$/
+const patternDomain = /^[a-z0-9]+$/
 
 const onSubmit = (values: NetForm[]) => {
   console.log('submit', values)
 
-  netModuleReg(values)
+  apiNetModuleReg(values)
 }
 const onFailed = (errorInfo: NetForm[]) => {
   console.log('failed', errorInfo)
@@ -54,7 +54,7 @@ const onFailed = (errorInfo: NetForm[]) => {
   <div id="app">
     <van-form @failed="onFailed" @submit="onSubmit">
       <van-nav-bar
-        title="配置:"
+        title="网络模块配置"
         left-text="返回"
         right-text="按钮"
         left-arrow
@@ -109,7 +109,9 @@ const onFailed = (errorInfo: NetForm[]) => {
           placeholder="请输入域名"
           name="domain"
           required
-          :rules="[{ domain, required: true, message: '请填写正确内容' }]"
+          :rules="[
+            { required: true, patternDomain, message: '请填写正确内容' },
+          ]"
           @blur="subDomainValue = $event.target.value"
         />
 
@@ -134,20 +136,6 @@ const onFailed = (errorInfo: NetForm[]) => {
       </div>
     </van-form>
   </div>
-  <!--  &lt;!&ndash; 密码输入框 &ndash;&gt;-->
-  <!--  <van-password-input-->
-  <!--      :value="value"-->
-  <!--      info="密码为 6 位数字"-->
-  <!--      :focused="showKeyboard"-->
-  <!--      @focus="showKeyboard = true"-->
-  <!--  />-->
-  <!--  &lt;!&ndash; 数字键盘 &ndash;&gt;-->
-  <!--  <van-number-keyboard-->
-  <!--      :show="showKeyboard"-->
-  <!--      @input="onInput"-->
-  <!--      @delete="onDelete"-->
-  <!--      @blur="showKeyboard = false"-->
-  <!--  />-->
 </template>
 
 <style scoped>

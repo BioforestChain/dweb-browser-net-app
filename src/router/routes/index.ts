@@ -13,7 +13,18 @@ const routes: RouteRecordRaw[] = [
     name: 'home',
     component: () => import('@/components/NetModules.vue'),
     meta: {
-      title: 'Home',
+      title: 'NetModules',
+    },
+  },
+  /**
+   * 列表
+   */
+  {
+    path: '/net-module-list',
+    name: 'net-module-list',
+    component: () => import('@/components/NetModulesLists.vue'),
+    meta: {
+      title: 'NetModulesLists',
     },
   },
   /**

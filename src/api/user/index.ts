@@ -1,35 +1,40 @@
 import request from '@/utils/http'
-import type { NetForm } from '@/types'
+import type {
+  NetForm,
+  NetModuleRegInfo,
+  GetNetModuleList,
+  NetModuleList,
+  GetNetModuleId,
+  NetModuleDetail,
+} from '@/types'
 // api枚举
 enum Api {
-  Login = '/login',
   NetModuleReg = '/proxy/user/net-module-reg',
+  NetModuleList = '/proxy/user/net-module-list',
+  NetModuleDetail = '/proxy/user/net-module-detail',
 }
 
-// 用户信息
-interface UserInfo {
-  userName: string
-}
-interface NetModuleRegInfo {
-  domain: string
-  net_id: string
-  secret: string
-}
-
-/**
- * 登录
- */
-export const accountLogin = () => {
-  return request<UserInfo>({
-    url: Api.Login,
-    method: 'get',
-  })
-}
-
-export const netModuleReg = (values: NetForm[]) => {
+export const apiNetModuleReg = (values: NetForm[]) => {
   return request<NetModuleRegInfo>({
     url: Api.NetModuleReg,
     method: 'post',
     data: values,
+  })
+}
+
+export const apiNetModuleDetail = (values: GetNetModuleId) => {
+  return request<NetModuleDetail>({
+    url: Api.NetModuleDetail,
+    method: 'get',
+    params: values,
+  })
+}
+
+// export const apiNetModuleList = (values: NetModuleList[]) => {
+export const apiNetModuleList = (values: NetModuleList) => {
+  return request<GetNetModuleList>({
+    url: Api.NetModuleList,
+    method: 'get',
+    params: values,
   })
 }
