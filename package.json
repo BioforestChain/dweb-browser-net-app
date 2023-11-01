@@ -26,6 +26,8 @@
   "dependencies": {
     "@bassist/progress": "^0.2.2",
     "@bassist/utils": "^0.13.0",
+    "@plaoc/plugins": "^0.4.1",
+    "@vueuse/core": "^10.5.0",
     "axios": "^1.5.1",
     "pinia": "^2.1.6",
     "vant": "^4.7.2",
