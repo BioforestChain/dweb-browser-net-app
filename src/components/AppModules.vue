@@ -36,7 +36,7 @@ const netIdValueFormatter = (value: string) => {
 
 const net_list = ref<AppModuleDetail[]>([])
 const getNetModuleIdValue = GetNetModuleIdFromCfg.value
-async function postAppModuleForm(values: AppForm) {
+async function postAppModuleForm(values: AppForm['arrayAppIdInfo']) {
   const res = await apiAppModuleReg({
     arrayAppIdInfo: values,
   })
