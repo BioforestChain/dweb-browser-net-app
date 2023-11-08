@@ -12,8 +12,8 @@ watchResize(() => {
   document.body.className = `platform-${isMobile() ? 'mobile' : 'desktop'}`
 })
 
-import NetProxy from '@/lib/ws'
+// import NetProxy from '@/lib/ws'
 
-const ni = new NetProxy()
-ni.getNetInfo()
+// const ni = new NetProxy()
+// ni.getNetInfo()
 </script>

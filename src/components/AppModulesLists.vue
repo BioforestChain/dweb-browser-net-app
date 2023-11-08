@@ -1,14 +1,13 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
-// import type { NetModuleList } from '@/types'
-import { apiNetModuleList } from '@/api/user'
-import type { NetModuleDetail } from '@/types'
-import { GetNetModuleIdValue, GetDateStr, $toast } from '@/types'
+import { ref } from 'vue'
+// import type { AppModuleList } from '@/types'
+import { apiAppModuleList, apiAppModuleDel } from '@/api/user'
+import type { AppModuleDetail, GetAppModuleId } from '@/types'
+import { GetAppModuleIdValue, GetDateStr, $toast } from '@/types'
 import router from '@/router'
 defineProps<{ msg: string }>()
 const selectedIndex = ref(-1)
-const netModuleList = ref<NetModuleDetail[]>([])
-// const netModuleList = ref([])
+const appModuleList = ref<AppModuleDetail[]>([])
 const loading = ref(false)
 const finished = ref(false)
 const refreshing = ref(false)
@@ -18,8 +17,13 @@ let total = 0 // 总条数
 const page_size = 10 // 每页大小
 const offset = (page - 1) * page_size //偏移量
 const limit = 30
-function removeDuplicates(items: NetModuleDetail[]): NetModuleDetail[] {
-  const map = new Map<number, NetModuleDetail>()
+
+const className1 = 'red-text'
+const className2 = 'blue-text'
+const className3 = 'green-text'
+
+function removeDuplicates(items: AppModuleDetail[]): AppModuleDetail[] {
+  const map = new Map<number, AppModuleDetail>()
   items.forEach((item) => {
     const existing = map.get(item.id)
     if (existing) {
@@ -33,50 +37,56 @@ function removeDuplicates(items: NetModuleDetail[]): NetModuleDetail[] {
   return Array.from(map.values())
 }
 async function getModuleList() {
-  const res = await apiNetModuleList({
+  const res = await apiAppModuleList({
+    app_name: '',
+    user_name: '',
+    app_id: '',
+    net_id: '',
+    is_online: 0,
+    is_install: 1,
     page: page,
-    domain: '',
-    netID: '',
-    isOnline: 0,
     limit: limit,
     offset: offset,
   })
-  // console.log('existingValue', existingValue)
-  // console.log('existingValue', existingValue.length)
-  let net_list: NetModuleDetail[] = []
+  let app_list: AppModuleDetail[] = []
   // 判断获取数据条数若等于0
   if (res.code != 0 && res.data.list.length === 0) {
-    netModuleList.value = [] // 清空数组
+    appModuleList.value = [] // 清空数组
     finished.value = true // 停止加载
   }
-  const existingValue = localStorage.getItem(GetNetModuleIdValue)
+  const existingValue = localStorage.getItem(GetAppModuleIdValue)
   if (existingValue != null) {
     // 解析成数组
     const data = JSON.parse(existingValue)
     const cleanedData = removeDuplicates(data)
-    console.log('cleanedData data', cleanedData)
     // 1. 提取id
     const ids = cleanedData.map((item: any) => item.id)
     // 2. 去重
     const uniqueIds = [...new Set(ids)]
     // 3. 获取数量
     const count = uniqueIds.length
+    console.log('existingValue count', count)
     if (res.code == 0 && res.data.list != null) {
       total = res.data.total
       if (total == count) {
-        netModuleList.value.push(...cleanedData)
-        localStorage.setItem(GetNetModuleIdValue, JSON.stringify(cleanedData))
+        appModuleList.value.push(...cleanedData)
+      } else if (total < count) {
+        appModuleList.value.push(...res.data.list)
       } else {
-        netModuleList.value.push(...res.data.list)
+        appModuleList.value.push(...res.data.list)
       }
       loading.value = false
+      localStorage.setItem(
+        GetAppModuleIdValue,
+        JSON.stringify(appModuleList.value),
+      )
     } else {
       $toast.open({
         message: '已全部加载完!',
         type: 'success',
         position: 'top',
       })
-      if (netModuleList.value.length >= total) {
+      if (appModuleList.value.length >= total) {
         finished.value = true
       }
     }
@@ -87,14 +97,14 @@ async function getModuleList() {
         existingValue === null ||
         existingValue === '[]'
       ) {
-        localStorage.removeItem(GetNetModuleIdValue)
+        localStorage.removeItem(GetAppModuleIdValue)
       } else {
-        net_list = JSON.parse(existingValue)
+        app_list = JSON.parse(existingValue)
       }
-      net_list.push(...res.data.list)
-      console.log(GetDateStr.value + ' net_list', net_list)
-      localStorage.setItem(GetNetModuleIdValue, JSON.stringify(net_list))
-      netModuleList.value.push(...res.data.list)
+      app_list.push(...res.data.list)
+      console.log(GetDateStr.value + ' app_list', app_list)
+      localStorage.setItem(GetAppModuleIdValue, JSON.stringify(app_list))
+      appModuleList.value.push(...res.data.list)
     }
   }
 }
@@ -105,13 +115,13 @@ const onLoad = () => {
     getModuleList() // 调用上面方法,请求数据
     page++ // 分页数加一
     if (refreshing.value) {
-      netModuleList.value = []
+      appModuleList.value = []
       refreshing.value = false
     }
     // 加载状态结束
     loading.value = false
     // 数据全部加载完成
-    if (netModuleList.value.length >= total) {
+    if (appModuleList.value.length >= total) {
       finished.value = true
     }
 
@@ -119,58 +129,53 @@ const onLoad = () => {
   }, 1500)
 }
 
-onMounted(async () => {
-  // getModuleList()
-})
-// methods: {
-//   // 上拉加载
-//   onLoad()
-// }
-
 const onRefresh = () => {
-  // 清空列表数据
-  // localStorage.removeItem(getNetModuleId)
   finished.value = false
   // 重新加载数据
   // 将 loading 设置为 true，表示处于加载状态
   loading.value = true
   page = 1 // 分页数赋值为1
-  netModuleList.value = []
+  appModuleList.value = []
   onLoad()
 }
 function handleAdd() {
   router.push({
-    path: '/',
-    // query: {
-    //   id,
-    // },
+    path: 'app-module-reg',
   })
 }
 
-//handleEdit
-function handleEdit(id: number) {
-  router.push({
-    path: '/',
-    query: {
-      id,
-    },
+async function delAppById(values: GetAppModuleId['id']) {
+  const res = await apiAppModuleDel({
+    id: values,
   })
+  if (res.code == 0) {
+    const existingValue = localStorage.getItem(GetAppModuleIdValue)
+    if (existingValue != null) {
+      const data: any = JSON.parse(existingValue)
+      const newItems = data.filter((item: { id: number }) => item.id !== values)
+      localStorage.setItem(GetAppModuleIdValue, JSON.stringify(newItems))
+    } else {
+      localStorage.removeItem(GetAppModuleIdValue)
+      onRefresh()
+    }
+  }
 }
-//cell selected
+
+function handleDel(id: number) {
+  delAppById(id)
+  // window.location.reload()
+  router.go(0)
+}
+
 function onClickSelected() {
-  // selected.value = 1
   return (selectedIndex.value = 1)
-  //van-cell--no-selected
 }
-// function selectedClasses() {
-//   return selectedIndex.value > -1 ? [selectedIndex.value] : []
-// }
 </script>
 
 <template>
   <div id="app">
     <van-nav-bar
-      title="网络模块配置列表"
+      title="App模块配置列表"
       right-text="新增"
       @click-right="handleAdd"
     />
@@ -186,20 +191,17 @@ function onClickSelected() {
       >
         <!-- <van-cell v-for="item in list" :key="item" :title="item" /> -->
         <van-cell
-          v-for="(item, i) in netModuleList"
+          v-for="(item, i) in appModuleList"
           :key="i"
-          :selected="item.is_selected"
+          :title="`appName:${item.app_name}`"
+          class="van-cell__title"
           @click="onClickSelected"
         >
-          <span
-            class="selectedIndex.value === i ? 'van-cell--selected' : 'van-cell--no-selected'"
-          >
-            &nbsp;
-          </span>
-          <span class="">{{ item.domain }},</span>
-          <span class="">是否在线:{{ item.is_online }}</span>
-          <van-button type="default" @click="handleEdit(item.id)">
-            修改
+          <span :class="className1">{{ item.net_id }},</span>
+          <span :class="className2">{{ item.user_name }},</span>
+          <span :class="className3">{{ item.is_online }}</span>
+          <van-button size="small" type="danger" @click="handleDel(item.id)">
+            删除
           </van-button>
         </van-cell>
       </van-list>
@@ -208,15 +210,32 @@ function onClickSelected() {
 </template>
 
 <style scoped>
+.van-cell__title {
+  font-size: 0.15rem;
+  overflow: hidden;
+  text-overflow: ellip/sis;
+  /* white-space: nowrap; */
+}
+.van-cell__title span {
+  white-space: pre-wr;
+  word-break: break-all;
+}
+.red-text {
+  color: red;
+  font: 0.8em sans-serif;
+}
+
+.blue-text {
+  color: blue;
+}
+
+.green-text {
+  color: green;
+}
 .van-cell {
   padding: 0.1rem 0.2rem 0.1rem 0;
   border-bottom: 1px solid #ccc;
   font-size: 1rem;
-}
-.van-cell--selected {
-  background-color: #00a508;
-}
-.van-cell--no-selected {
 }
 
 #app {

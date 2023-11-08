@@ -2,7 +2,8 @@ import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import App from '@/App.vue'
 import router from '@/router'
-
+import ToastPlugin from 'vue-toast-notification'
+import 'vue-toast-notification/dist/theme-sugar.css'
 // 全局样式
 import 'virtual:uno.css'
 import '@/styles/var.less'
@@ -12,8 +13,20 @@ import '@/styles/global.less'
 // 创建 Pinia 实例
 const pinia = createPinia()
 import Vant from 'vant'
-import { NavBar, Tabbar, TabbarItem, Button, List } from 'vant'
+import {
+  NavBar,
+  Tabbar,
+  TabbarItem,
+  Button,
+  List,
+  Switch,
+  Tag,
+  Popup,
+  CheckboxGroup,
+  Checkbox,
+} from 'vant'
 import 'vant/lib/index.css'
+import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'
 
 /**
  * Pinia 支持功能扩展，例如本地持久化功能
@@ -24,7 +37,7 @@ import 'vant/lib/index.css'
  *
  * @see https://prazdevs.github.io/pinia-plugin-persistedstate/zh/guide/
  */
-// pinia.use(piniaPluginPersistedstate)
+pinia.use(piniaPluginPersistedstate)
 
 createApp(App)
   .use(pinia) // 启用 Pinia
@@ -32,7 +45,13 @@ createApp(App)
   .use(Vant)
   .use(NavBar)
   .use(Button)
+  .use(Switch)
   .use(List)
   .use(Tabbar)
+  .use(Tag)
+  .use(Popup)
+  .use(CheckboxGroup)
+  .use(Checkbox)
   .use(TabbarItem)
+  .use(ToastPlugin)
   .mount('#app')

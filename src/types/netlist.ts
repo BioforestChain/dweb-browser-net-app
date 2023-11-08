@@ -1,23 +1,9 @@
-// export interface GetNetModuleList {
-//   // length: number
-//   list: NetList[]
-//   data: {
-//     last_page: number
-//     list: NetList
-//     page: number
-//     total: number
-//   }
-//   last_page: number
-//   page: number
-//   total: number
-// }
-
 export interface GetNetModuleList {
   // length: number
-  list: NetList[]
+  list: NetModuleDetail[]
   data: {
     last_page: number
-    list: NetList
+    list: NetModuleDetail
     page: number
     total: number
   }
@@ -34,22 +20,15 @@ export interface NetModuleDetail {
   id: number
   net_id: string
   domain: string
+  root_domain: string
+  prefix_domain: string
+  port: number
   remark: string
   timestamp: number
   is_online: number
   created_at: string
   update_at: string
-}
-
-export interface NetList {
-  id: number
-  net_id: string
-  domain: string
-  remark: string
-  timestamp: number
-  is_online: number
-  created_at: string
-  update_at: string
+  is_selected: number
 }
 
 export interface NetModuleList {
