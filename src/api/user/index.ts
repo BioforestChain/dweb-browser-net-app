@@ -7,6 +7,21 @@ import type {
   GetNetModuleId,
   NetModuleDetail,
 } from '@/types'
+
+import { ConfigPlugin } from '@plaoc/plugins'
+
+interface T {
+  name: string
+  age: number
+}
+
+class Test extends ConfigPlugin {
+  async getNetInfo() {
+    const url = '/test'
+    return this.fetchApi(url).object<T>
+  }
+}
+
 // api枚举
 enum Api {
   NetModuleReg = '/proxy/user/net-module-reg',
