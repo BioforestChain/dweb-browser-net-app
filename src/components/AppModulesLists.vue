@@ -6,6 +6,7 @@ import type { AppModuleDetail, GetAppModuleId } from '@/types'
 import { GetAppModuleIdValue, GetDateStr, $toast } from '@/types'
 import router from '@/router'
 defineProps<{ msg: string }>()
+
 const selectedIndex = ref(-1)
 const appModuleList = ref<AppModuleDetail[]>([])
 const loading = ref(false)

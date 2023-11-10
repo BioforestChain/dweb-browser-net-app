@@ -20,13 +20,8 @@ const addTmpAppIdNameList: any = [
   { appId: 'helloworld003', appName: '003.bagen.com' },
   { appId: 'helloworld005', appName: '005.bagen.com' },
 ]
-
-// addTmpAppIdNameList.value.forEach((element) => {
-//   console.log('el', element)
-// })
-
+// 匹配根域名正则
 const netIdValueFormatter = (value: string) => {
-  // 匹配根域名正则
   if (/[^a-z.\d]/i.test(value)) {
     return ''
   } else {

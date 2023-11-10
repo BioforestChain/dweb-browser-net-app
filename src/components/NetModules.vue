@@ -50,7 +50,7 @@ const patternDomain = /^[a-z0-9]+$/
 if (GetUseUserStore.currentNetMoudleId.length === 0) {
   GetUseUserStore.currentNetMoudleId = GetNetModuleIdValue
 }
-async function postNetModuleForm(values: NetForm[]) {
+async function postNetModuleForm(values: NetForm) {
   const res = await apiNetModuleReg(values)
   if (res.code == 0 && res.data.id > 0) {
     if (GetUseUserStore.netMoudlePrimaryId == 0) {

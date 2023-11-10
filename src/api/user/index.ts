@@ -25,7 +25,7 @@ enum Api {
   AppModuleDetail = '/proxy/user/app-module-detail',
 }
 
-export const apiNetModuleReg = (values: NetForm[]) => {
+export const apiNetModuleReg = (values: NetForm) => {
   return request<NetModuleDetail>({
     url: Api.NetModuleReg,
     method: 'post',

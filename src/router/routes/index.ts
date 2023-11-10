@@ -10,6 +10,14 @@ const routes: RouteRecordRaw[] = [
    * 网络模块
    */
   {
+    path: '/index.html',
+    name: 'index',
+    component: () => import('@/components/NetModules.vue'),
+    meta: {
+      title: 'NetModules',
+    },
+  },
+  {
     path: '/',
     name: 'home',
     component: () => import('@/components/NetModules.vue'),
