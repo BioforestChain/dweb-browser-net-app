@@ -13,7 +13,6 @@ import type {
   AppModuleDetail,
   GetAppModuleData,
 } from '@/types'
-// api枚举
 enum Api {
   NetModuleReg = '/proxy/user/net-module-reg',
   NetModuleList = '/proxy/user/net-module-list',
@@ -75,7 +74,7 @@ export const apiAppModuleList = (values: AppModuleList) => {
 export const apiAppModuleDel = (values: GetAppModuleId) => {
   return request<GetAppModuleData>({
     url: Api.AppModuleDel,
-    method: 'get',
-    params: values,
+    method: 'post',
+    data: values,
   })
 }

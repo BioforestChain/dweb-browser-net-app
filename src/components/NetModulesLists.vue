@@ -5,6 +5,8 @@ import { apiNetModuleList } from '@/api/user'
 import type { NetModuleDetail } from '@/types'
 import { GetNetModuleIdValue, GetDateStr, $toast } from '@/types'
 import router from '@/router'
+import { del, get, set } from 'idb-keyval'
+
 defineProps<{ msg: string }>()
 const selectedIndex = ref(-1)
 const netModuleList = ref<NetModuleDetail[]>([])
@@ -41,62 +43,64 @@ async function getModuleList() {
     limit: limit,
     offset: offset,
   })
-  // console.log('existingValue', existingValue)
-  // console.log('existingValue', existingValue.length)
   let net_list: NetModuleDetail[] = []
   // 判断获取数据条数若等于0
   if (res.code != 0 && res.data.list.length === 0) {
     netModuleList.value = [] // 清空数组
     finished.value = true // 停止加载
   }
-  const existingValue = localStorage.getItem(GetNetModuleIdValue)
-  if (existingValue != null) {
-    // 解析成数组
-    const data = JSON.parse(existingValue)
-    const cleanedData = removeDuplicates(data)
-    console.log('cleanedData data', cleanedData)
-    // 1. 提取id
-    const ids = cleanedData.map((item: any) => item.id)
-    // 2. 去重
-    const uniqueIds = [...new Set(ids)]
-    // 3. 获取数量
-    const count = uniqueIds.length
-    if (res.code == 0 && res.data.list != null) {
-      total = res.data.total
-      if (total == count) {
-        netModuleList.value.push(...cleanedData)
-        localStorage.setItem(GetNetModuleIdValue, JSON.stringify(cleanedData))
+  // const existingValue = localStorage.getItem(GetNetModuleIdValue)
+  get(GetNetModuleIdValue).then((existingValue) => {
+    if (existingValue != null || existingValue != undefined) {
+      // 解析成数组
+      const cleanedData = removeDuplicates(existingValue)
+      console.log('cleanedData data', cleanedData)
+      // 1. 提取id
+      const ids = cleanedData.map((item: any) => item.id)
+      // 2. 去重
+      const uniqueIds = [...new Set(ids)]
+      // 3. 获取数量
+      const count = uniqueIds.length
+      if (res.code == 0 && res.data.list != null) {
+        total = res.data.total
+        if (total == count) {
+          netModuleList.value.push(...cleanedData)
+          set(GetNetModuleIdValue, cleanedData)
+          // localStorage.setItem(GetNetModuleIdValue, JSON.stringify(cleanedData))
+        } else {
+          netModuleList.value.push(...res.data.list)
+        }
+        loading.value = false
       } else {
+        $toast.open({
+          message: '已全部加载完!',
+          type: 'success',
+          position: 'top',
+        })
+        if (netModuleList.value.length >= total) {
+          finished.value = true
+        }
+      }
+    } else {
+      if (res.code == 0 && res.data.list != null) {
+        if (
+          existingValue === undefined ||
+          existingValue === null ||
+          existingValue === '[]'
+        ) {
+          // localStorage.removeItem(GetNetModuleIdValue)
+          del(GetNetModuleIdValue)
+        } else {
+          net_list = existingValue
+        }
+        net_list.push(...res.data.list)
+        console.log(GetDateStr.value + ' net_list', net_list)
+        set(GetNetModuleIdValue, net_list)
+        // localStorage.setItem(GetNetModuleIdValue, JSON.stringify(net_list))
         netModuleList.value.push(...res.data.list)
       }
-      loading.value = false
-    } else {
-      $toast.open({
-        message: '已全部加载完!',
-        type: 'success',
-        position: 'top',
-      })
-      if (netModuleList.value.length >= total) {
-        finished.value = true
-      }
     }
-  } else {
-    if (res.code == 0 && res.data.list != null) {
-      if (
-        existingValue === undefined ||
-        existingValue === null ||
-        existingValue === '[]'
-      ) {
-        localStorage.removeItem(GetNetModuleIdValue)
-      } else {
-        net_list = JSON.parse(existingValue)
-      }
-      net_list.push(...res.data.list)
-      console.log(GetDateStr.value + ' net_list', net_list)
-      localStorage.setItem(GetNetModuleIdValue, JSON.stringify(net_list))
-      netModuleList.value.push(...res.data.list)
-    }
-  }
+  })
 }
 const onLoad = () => {
   // 异步更新数据
@@ -130,6 +134,7 @@ onMounted(async () => {
 const onRefresh = () => {
   // 清空列表数据
   // localStorage.removeItem(getNetModuleId)
+  del(GetNetModuleIdValue)
   finished.value = false
   // 重新加载数据
   // 将 loading 设置为 true，表示处于加载状态

@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-// import type { AppModuleList } from '@/types'
 import { apiAppModuleList, apiAppModuleDel } from '@/api/user'
 import type { AppModuleDetail, GetAppModuleId } from '@/types'
 import { GetAppModuleIdValue, GetDateStr, $toast } from '@/types'
 import router from '@/router'
+import { get, set, del } from 'idb-keyval'
+
 defineProps<{ msg: string }>()
 
 const selectedIndex = ref(-1)
@@ -49,65 +50,59 @@ async function getModuleList() {
     limit: limit,
     offset: offset,
   })
-  let app_list: AppModuleDetail[] = []
+  const app_list: AppModuleDetail[] = []
   // 判断获取数据条数若等于0
   if (res.code != 0 && res.data.list.length === 0) {
     appModuleList.value = [] // 清空数组
     finished.value = true // 停止加载
   }
-  const existingValue = localStorage.getItem(GetAppModuleIdValue)
-  if (existingValue != null) {
-    // 解析成数组
-    const data = JSON.parse(existingValue)
-    const cleanedData = removeDuplicates(data)
-    // 1. 提取id
-    const ids = cleanedData.map((item: any) => item.id)
-    // 2. 去重
-    const uniqueIds = [...new Set(ids)]
-    // 3. 获取数量
-    const count = uniqueIds.length
-    console.log('existingValue count', count)
-    if (res.code == 0 && res.data.list != null) {
-      total = res.data.total
-      if (total == count) {
-        appModuleList.value.push(...cleanedData)
-      } else if (total < count) {
-        appModuleList.value.push(...res.data.list)
+  if (res.code == 0 && res.data.list != null) {
+    get(GetAppModuleIdValue).then((existingValue) => {
+      if (existingValue != null) {
+        // 解析成数组
+        const cleanedData = removeDuplicates(existingValue)
+        // 1. 提取id
+        const ids = cleanedData.map((item: any) => item.id)
+        // 2. 去重
+        const uniqueIds = [...new Set(ids)]
+        // 3. 获取数量
+        const count = uniqueIds.length
+        total = res.data.total
+        if (total == count) {
+          appModuleList.value.push(...cleanedData)
+          app_list.push(...cleanedData)
+        } else if (total < count) {
+          appModuleList.value.push(...res.data.list)
+          app_list.push(...res.data.list)
+        }
+        loading.value = false
+        console.log(GetDateStr.value + ' app_list1', app_list)
+        set(GetAppModuleIdValue, app_list)
+        $toast.open({
+          message: '已全部加载完!',
+          type: 'success',
+          position: 'top',
+        })
+        if (appModuleList.value.length >= total) {
+          finished.value = true
+        }
       } else {
-        appModuleList.value.push(...res.data.list)
+        if (
+          existingValue === undefined ||
+          existingValue === null ||
+          existingValue === '[]'
+        ) {
+          del(GetAppModuleIdValue)
+          app_list.push(...res.data.list)
+          console.log(GetDateStr.value + ' app_list2', app_list)
+          set(GetAppModuleIdValue, app_list)
+          appModuleList.value.push(...res.data.list)
+        }
       }
-      loading.value = false
-      localStorage.setItem(
-        GetAppModuleIdValue,
-        JSON.stringify(appModuleList.value),
-      )
-    } else {
-      $toast.open({
-        message: '已全部加载完!',
-        type: 'success',
-        position: 'top',
-      })
-      if (appModuleList.value.length >= total) {
-        finished.value = true
-      }
-    }
-  } else {
-    if (res.code == 0 && res.data.list != null) {
-      if (
-        existingValue === undefined ||
-        existingValue === null ||
-        existingValue === '[]'
-      ) {
-        localStorage.removeItem(GetAppModuleIdValue)
-      } else {
-        app_list = JSON.parse(existingValue)
-      }
-      app_list.push(...res.data.list)
-      console.log(GetDateStr.value + ' app_list', app_list)
-      localStorage.setItem(GetAppModuleIdValue, JSON.stringify(app_list))
-      appModuleList.value.push(...res.data.list)
-    }
+    })
   }
+
+  // const existingValue = localStorage.getItem(GetAppModuleIdValue)
 }
 const onLoad = () => {
   // 异步更新数据
@@ -150,15 +145,19 @@ async function delAppById(values: GetAppModuleId['id']) {
     id: values,
   })
   if (res.code == 0) {
-    const existingValue = localStorage.getItem(GetAppModuleIdValue)
-    if (existingValue != null) {
-      const data: any = JSON.parse(existingValue)
-      const newItems = data.filter((item: { id: number }) => item.id !== values)
-      localStorage.setItem(GetAppModuleIdValue, JSON.stringify(newItems))
-    } else {
-      localStorage.removeItem(GetAppModuleIdValue)
-      onRefresh()
-    }
+    get(GetAppModuleIdValue).then((existingValue) => {
+      if (existingValue != null) {
+        const data: any = existingValue
+        const newItems = data.filter(
+          (item: { id: number }) => item.id !== values,
+        )
+        set(GetAppModuleIdValue, newItems.value)
+      } else {
+        del(GetAppModuleIdValue)
+        // clear()
+        onRefresh()
+      }
+    })
   }
 }
 
@@ -198,9 +197,10 @@ function onClickSelected() {
           class="van-cell__title"
           @click="onClickSelected"
         >
+          <span :class="className1">{{ item.id }},</span>
           <span :class="className1">{{ item.net_id }},</span>
           <span :class="className2">{{ item.user_name }},</span>
-          <span :class="className3">{{ item.is_online }}</span>
+          <span :class="className3" />
           <van-button size="small" type="danger" @click="handleDel(item.id)">
             删除
           </van-button>

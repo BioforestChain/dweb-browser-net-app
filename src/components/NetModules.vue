@@ -7,8 +7,7 @@ import router from '@/router'
 import { GetNetModuleIdValue, GetUseUserStore } from '@/types'
 import { GetDateStr, $toast } from '@/types'
 import { showConfirmDialog } from 'vant'
-
-// import { useStorage,useLocalStorage,useDateFormat,useNow } from '@vueuse/core'
+import { get, set } from 'idb-keyval'
 
 defineProps<{ msg: string }>()
 
@@ -35,57 +34,52 @@ const rootDomainFormatter = (value: string) => {
     return value
   }
 }
-// const patternRootDomain = /^[a-z0-9]+\.[a-z]+$/
 // 校验函数返回 true 表示校验通过，false 表示不通过
-// const patternRootDomain = (val:string) => /^[a-z0-9]+\.[a-z]+$/.test(val);
 const patternRootDomain = (val: string) => {
   const regex = /^[a-z0-9]+\.[a-z]+$/
   if (!regex.test(val)) {
     return `${val} 不合法的根域名，请重新输入`
   }
 }
-const net_list = ref<NetModuleDetail[]>([])
-// const patternRootDomain = (val:string) => /^[0-9]+$/.test(val);
 const patternDomain = /^[a-z0-9]+$/
 if (GetUseUserStore.currentNetMoudleId.length === 0) {
   GetUseUserStore.currentNetMoudleId = GetNetModuleIdValue
 }
+const net_list: NetModuleDetail[] = []
+
 async function postNetModuleForm(values: NetForm) {
   const res = await apiNetModuleReg(values)
   if (res.code == 0 && res.data.id > 0) {
     if (GetUseUserStore.netMoudlePrimaryId == 0) {
       GetUseUserStore.netMoudlePrimaryId = res.data.id
     }
-    if (GetUseUserStore.currentNetMoudleDomain.length === 0) {
-      GetUseUserStore.currentNetMoudleDomain = res.data.domain
-    }
-
-    console.log('====2', GetUseUserStore.netMoudlePrimaryId) // undefined ====
-    const existingValue = localStorage.getItem(GetNetModuleIdValue)
-    if (existingValue === undefined || existingValue === null) {
-      localStorage.removeItem(GetNetModuleIdValue)
-      net_list.value.push(res.data)
-      console.log(
-        GetDateStr.value + 'postNetModuleForm net_list1',
-        net_list.value,
-      )
-      localStorage.setItem(GetNetModuleIdValue, JSON.stringify(net_list.value))
-    } else {
-      net_list.value = JSON.parse(existingValue)
-      const index = net_list.value.findIndex((item) => item.id == res.data.id)
-      //遍历存在的 然后当下提交的是最新的，若有相同的id覆盖之
-      if (index !== -1) {
-        net_list.value[index] = res.data
+    GetUseUserStore.currentNetMoudleDomain = res.data.domain
+    console.log('====netMoudlePrimaryId', GetUseUserStore.netMoudlePrimaryId) //
+    get(GetNetModuleIdValue).then((existingValue) => {
+      if (existingValue === undefined || existingValue === null) {
+        console.log(GetDateStr + ' existingValue ', existingValue)
+        net_list.push(res.data)
+        console.log(
+          GetDateStr.value + ' postNetModuleForm net_list1 ',
+          net_list,
+        )
+        set(GetNetModuleIdValue, net_list)
       } else {
-        //否则新增
-        net_list.value.push(res.data)
+        const index = net_list.findIndex((item) => item.id == res.data.id)
+        //遍历存在的 然后当下提交的是最新的，若有相同的id覆盖之
+        if (index !== -1) {
+          net_list[index] = res.data
+        } else {
+          //否则新增
+          net_list.push(res.data)
+        }
+        console.log(
+          GetDateStr.value + ' postNetModuleForm net_list2 ',
+          net_list,
+        )
+        set(GetNetModuleIdValue, net_list)
       }
-      console.log(
-        GetDateStr.value + 'postNetModuleForm net_list2',
-        net_list.value,
-      )
-      localStorage.setItem(GetNetModuleIdValue, JSON.stringify(net_list.value))
-    }
+    })
 
     $toast.open({
       message: '提交成功!',
@@ -114,8 +108,6 @@ async function postNetModuleForm(values: NetForm) {
 //编辑
 // 获取地址栏参数
 let queryId: any = useRouteObj.query.id
-// 获取路由参数
-// const id2 = useRouteObj.params.id
 console.log('queryId,', queryId)
 if (queryId != null) {
   editNetForm(queryId)
@@ -132,7 +124,6 @@ async function editNetForm(queryId: any) {
     (Array.isArray(existingValue) && existingValue.length)
   ) {
     //api detail by id
-    // apiNetModuleDetail
     const res = GetNetModuleDetail(queryId)
     console.log('GetNetModuleDetail1', res)
     // const dataDetail = res.data
@@ -151,23 +142,23 @@ async function editNetForm(queryId: any) {
     //   if (element.id == queryId) {
     //     //如果有原list存在,原基础更新
     //     //  const existingValue = localStorage.getItem(GetNetModuleIdValue)
-    //     net_list.value = JSON.parse(existingValue)
+    //     net_list = JSON.parse(existingValue)
     //     const index = editFormArr.findIndex((item) => item.id == queryId)
     //     //遍历存在的 然后当下提交的是最新的，若有相同的id覆盖之
     //     if (index !== -1) {
-    //       net_list.value[index] = element
+    //       net_list[index] = element
     //     } else {
     //       //否则新增
-    //       net_list.value.push(element)
+    //       net_list.push(element)
     //     }
     //     // net_list.push(getModulesDetail.data)
     //     console.log(
     //       GetDateStr.value + 'editNetForm existing net_list',
-    //       net_list.value,
+    //       net_list,
     //     )
     //   }
     // })
-    // localStorage.setItem(GetNetModuleIdValue, JSON.stringify(net_list.value))
+    // localStorage.setItem(GetNetModuleIdValue, JSON.stringify(net_list))
     // const res = GetNetModuleDetail(queryId)
     // console.log('GetNetModuleDetail2', res)
   }

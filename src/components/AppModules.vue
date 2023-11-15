@@ -3,8 +3,13 @@ import { ref } from 'vue'
 import type { AppForm, AppModuleDetail } from '@/types'
 import { apiAppModuleReg } from '@/api/user'
 import router from '@/router'
-import { GetNetModuleIdFromCfg, GetUseUserStore } from '@/types'
+import {
+  GetNetModuleIdFromCfg,
+  GetAppModuleIdValue,
+  GetUseUserStore,
+} from '@/types'
 import { GetDateStr, $toast } from '@/types'
+import { del, get, set } from 'idb-keyval'
 
 defineProps<{ msg: string }>()
 const idValue = ref(0)
@@ -29,36 +34,36 @@ const netIdValueFormatter = (value: string) => {
   }
 }
 
-const net_list = ref<AppModuleDetail[]>([])
-const getNetModuleIdValue = GetNetModuleIdFromCfg.value
+let app_list: AppModuleDetail[] = []
 async function postAppModuleForm(values: AppForm['arrayAppIdInfo']) {
   const res = await apiAppModuleReg({
     arrayAppIdInfo: values,
   })
   if (res.code == 0 && res.data.id > 0) {
-    console.log('getNetModuleIdValue', getNetModuleIdValue)
-    const existingValue = localStorage.getItem(getNetModuleIdValue)
-    if (existingValue == undefined || existingValue === null) {
-      localStorage.removeItem(getNetModuleIdValue)
-    } else {
-      net_list.value = JSON.parse(existingValue)
-      const index = net_list.value.findIndex((item) => item.id == res.data.id)
-      //遍历存在的 然后当下提交的是最新的，若有相同的id覆盖之
-      if (index !== -1) {
-        net_list.value[index] = res.data
+    console.log('GetAppModuleIdValue', GetAppModuleIdValue)
+    get(GetAppModuleIdValue).then((existingValue) => {
+      if (existingValue === undefined || existingValue === null) {
+        del(GetAppModuleIdValue)
       } else {
-        //否则新增
-        net_list.value.push(res.data)
+        app_list = existingValue
+        const index = app_list.findIndex((item) => item.id == res.data.id)
+        //遍历存在的 然后当下提交的是最新的，若有相同的id覆盖之
+        if (index !== -1) {
+          app_list[index] = res.data
+        } else {
+          //否则新增
+          app_list.push(res.data)
+        }
+        console.log(GetDateStr.value + 'postAppModuleForm app_list', app_list)
+        set(GetAppModuleIdValue, app_list)
       }
-    }
-    console.log(GetDateStr.value + 'postAppModuleForm net_list', net_list.value)
-    localStorage.setItem(getNetModuleIdValue, JSON.stringify(net_list.value))
+    })
+
     $toast.open({
       message: '提交成功!',
       type: 'success',
       position: 'top',
     })
-    // router.go(0)
     router.push({
       name: 'app-module-list',
     })
@@ -78,7 +83,6 @@ async function postAppModuleForm(values: AppForm['arrayAppIdInfo']) {
 }
 //新增
 const onSubmit = (values: AppForm[]) => {
-  // values.app_id = appIdNameCheckResult.value
   values = arrLastChoosedCont.value
   console.log('postAppModuleForm values', values)
   postAppModuleForm(values)
@@ -95,29 +99,16 @@ const onFailed = (errorInfo: AppForm[]) => {
 }
 //nav-bar
 const onClickLeft = () => history.back()
-// const onClickLeft = () => {
-//   // 执行路由跳转
-//   router.push({
-//     name: 'net-module-list',
-//   })
-//   // router.push('/path/to/route')
-// }
-
-//下拉搜索
-
-const show = ref(false)
+//下拉列表
 const showBottom = ref(false)
 const showPopup = () => {
-  show.value = true
   showBottom.value = true
 }
 
 // 选中处理
-// const appIdNameCheckResult = ref<{ [key: string]: string }>({})
 const appIdNameCheckResult: any = ref({})
 const arrLastChoosedIdx: any = []
 const arrLastChoosedCont: any = []
-// let appIdNameCheckResult: any[]
 function onClickSelected() {
   arrLastChoosedIdx.value = []
   arrLastChoosedCont.value = []
@@ -133,13 +124,11 @@ function onClickSelected() {
   })
   console.log('arrLastChoosedIdx', arrLastChoosedIdx)
   arrLastChoosedIdx.value.forEach((item: number) => {
-    console.log('item', item)
-    addTmpAppIdNameList[item]['netId'] = getNetModuleIdValue
+    addTmpAppIdNameList[item]['netId'] = GetAppModuleIdValue
     addTmpAppIdNameList[item]['userName'] = userNameValue
     arrLastChoosedCont.value.push(addTmpAppIdNameList[item])
   })
   console.log('arrLastChoosedCont', arrLastChoosedCont)
-  //
 }
 </script>
 
@@ -158,9 +147,6 @@ function onClickSelected() {
         <van-field v-model="idValue" type="hidden" name="id" />
 
         <van-cell title="获取App模块配置信息" is-link @click="showPopup" />
-        <!-- <van-popup v-model:show="show" :style="{ padding: '64px' }">
-          内容
-        </van-popup> -->
 
         <van-popup
           v-model:show="showBottom"
