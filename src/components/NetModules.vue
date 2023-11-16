@@ -12,6 +12,7 @@ import { get, set } from 'idb-keyval'
 defineProps<{ msg: string }>()
 
 const checked = ref(false)
+const tagType = ref('warning')
 const useRouteObj = useRoute()
 
 const rootDomainValue = ref('')
@@ -85,6 +86,7 @@ async function postNetModuleForm(values: NetForm) {
       type: 'success',
       position: 'top',
     })
+    tagType.value = 'success'
     //TODO 后期视体验升级 跳列表页面
     // router.push({
     //   name: 'net-module-list',
@@ -104,7 +106,7 @@ async function postNetModuleForm(values: NetForm) {
   }
 }
 
-//编辑
+// TODO 编辑
 // 获取地址栏参数
 let queryId: any = useRouteObj.query.id
 console.log('queryId,', queryId)
@@ -207,17 +209,47 @@ const onClickLeft = () => {
   })
   // router.push('/path/to/route')
 }
+// function tagType() {
+//   return is_connected.value ? 'success' : 'danger'
+// }
 
-const onConnectNet = (newValue: boolean) => {
-  console.log('newV', newValue)
+const onConnectNet = (newValue: any) => {
+  console.log('btnOnConnectNet newV', newValue)
   showConfirmDialog({
     title: '提醒',
-    message: '是否启动连接？',
-  }).then(() => {
-    if (newValue) {
-      checked.value = newValue
-    }
+    message: '是否断开连接？',
+    theme: 'round-button',
+    closeOnPopstate: true,
   })
+    .then(() => {
+      $toast.open({
+        message: '断开!',
+        type: 'success',
+        position: 'top',
+      })
+      // 获取tag元素
+      // const tag = document.querySelector(
+      //   '.show-on-connect-net-status',
+      // ) as HTMLElement
+      // console.log('onConnectNet tag', tag?.setAttribute)
+      // 判断connect状态
+      tagType.value = 'danger'
+      console.log('btnOnConnectNet on confirm')
+      if (newValue) {
+        console.log('btnOnConnectNet checked.value', checked.value)
+        checked.value = newValue
+      }
+    })
+    .catch(() => {
+      //
+      $toast.open({
+        message: '取消!',
+        type: 'error',
+        position: 'top',
+      })
+      tagType.value = 'success'
+      console.log('btnOnConnectNet on cancel')
+    })
 }
 // TODO
 // function handleEdit(id: number) {
@@ -239,7 +271,12 @@ const onConnectNet = (newValue: boolean) => {
         <div class="van-tag--mini tag-div">
           <!-- <van-tag round type="success"> 连接 </van-tag>
           <van-tag round type="danger"> 断开 </van-tag> -->
-          <van-tag round color="grep" type="danger" />&nbsp;
+          <van-tag
+            class="show-on-connect-net-status"
+            round
+            color="grep"
+            :type="tagType"
+          />&nbsp;&nbsp;&nbsp;
         </div>
 
         <van-field v-model="idValue" type="hidden" name="id" />
