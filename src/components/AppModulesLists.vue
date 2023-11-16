@@ -86,18 +86,16 @@ async function getModuleList() {
         if (appModuleList.value.length >= total) {
           finished.value = true
         }
-      } else {
-        if (
-          existingValue === undefined ||
-          existingValue === null ||
-          existingValue === '[]'
-        ) {
-          del(GetAppModuleIdValue)
-          app_list.push(...res.data.list)
-          console.log(GetDateStr.value + ' app_list2', app_list)
-          set(GetAppModuleIdValue, app_list)
-          appModuleList.value.push(...res.data.list)
-        }
+      } else if (
+        existingValue === undefined ||
+        existingValue === null ||
+        existingValue === '[]'
+      ) {
+        del(GetAppModuleIdValue)
+        app_list.push(...res.data.list)
+        console.log(GetDateStr.value + ' app_list2', app_list)
+        set(GetAppModuleIdValue, app_list)
+        appModuleList.value.push(...res.data.list)
       }
     })
   }
@@ -193,14 +191,13 @@ function onClickSelected() {
         <van-cell
           v-for="(item, i) in appModuleList"
           :key="i"
-          :title="`appName:${item.app_name}`"
+          :title="`${item.id}_appName:${item.app_name}`"
           class="van-cell__title"
           @click="onClickSelected"
         >
-          <span :class="className1">{{ item.id }},</span>
-          <span :class="className1">{{ item.net_id }},</span>
-          <span :class="className2">{{ item.user_name }},</span>
-          <span :class="className3" />
+          <span :class="className1">{{ item.net_id }} &nbsp;&nbsp;</span>
+          <span :class="className2">{{ item.user_name }}</span>
+          <span :class="className3" />&nbsp;
           <van-button size="small" type="danger" @click="handleDel(item.id)">
             删除
           </van-button>

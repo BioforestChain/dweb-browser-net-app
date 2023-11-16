@@ -13,6 +13,7 @@ defineProps<{ msg: string }>()
 
 const checked = ref(false)
 const useRouteObj = useRoute()
+
 const rootDomainValue = ref('')
 const idValue = ref(0)
 const portValue = ref(80)
@@ -41,20 +42,18 @@ const patternRootDomain = (val: string) => {
     return `${val} 不合法的根域名，请重新输入`
   }
 }
-const patternDomain = /^[a-z0-9]+$/
-if (GetUseUserStore.currentNetMoudleId.length === 0) {
-  GetUseUserStore.currentNetMoudleId = GetNetModuleIdValue
+if (GetUseUserStore.currentNetModuleId.length === 0) {
+  GetUseUserStore.currentNetModuleId = GetNetModuleIdValue
 }
 const net_list: NetModuleDetail[] = []
 
 async function postNetModuleForm(values: NetForm) {
   const res = await apiNetModuleReg(values)
   if (res.code == 0 && res.data.id > 0) {
-    if (GetUseUserStore.netMoudlePrimaryId == 0) {
-      GetUseUserStore.netMoudlePrimaryId = res.data.id
+    if (GetUseUserStore.currentNetModulePrimaryId == 0) {
+      GetUseUserStore.currentNetModulePrimaryId = res.data.id
     }
-    GetUseUserStore.currentNetMoudleDomain = res.data.domain
-    console.log('====netMoudlePrimaryId', GetUseUserStore.netMoudlePrimaryId) //
+    GetUseUserStore.currentNetModuleDomain = res.data.domain
     get(GetNetModuleIdValue).then((existingValue) => {
       if (existingValue === undefined || existingValue === null) {
         console.log(GetDateStr + ' existingValue ', existingValue)
@@ -183,11 +182,10 @@ function paddingDataForm(element: any, queryId: any) {
   idValue.value = queryId
 }
 
-// console.log('id2,', id2)
 //新增
-const onSubmit = (values: NetForm[]) => {
-  idValue.value = GetUseUserStore.netMoudlePrimaryId
-  values.id = GetUseUserStore.netMoudlePrimaryId
+const onSubmit = (values: NetForm) => {
+  idValue.value = GetUseUserStore.currentNetModulePrimaryId
+  values.id = GetUseUserStore.currentNetModulePrimaryId
   postNetModuleForm(values)
 }
 
@@ -256,7 +254,6 @@ const onConnectNet = (newValue: boolean) => {
           :rules="[
             {
               required: true,
-              patternRootDomain: true,
               validator: patternRootDomain,
             },
           ]"
@@ -292,9 +289,7 @@ const onConnectNet = (newValue: boolean) => {
           placeholder="请输入广播地址前缀"
           name="domain"
           required
-          :rules="[
-            { required: true, patternDomain, message: '请填写正确内容' },
-          ]"
+          :rules="[{ required: true, message: '请填写正确内容' }]"
           @blur="subDomainValue = $event.target.value"
         />
 

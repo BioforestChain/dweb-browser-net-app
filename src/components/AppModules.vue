@@ -14,7 +14,7 @@ import { del, get, set } from 'idb-keyval'
 defineProps<{ msg: string }>()
 const idValue = ref(0)
 
-const userNameValue = GetUseUserStore.currentNetMoudleDomain
+const userNameValue = GetUseUserStore.currentNetModuleDomain
 
 const addTmpAppIdNameList: any = [
   { appId: 'helloworld123', appName: '123.bagen.com' },

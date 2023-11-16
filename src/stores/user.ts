@@ -4,9 +4,9 @@ import { UserInfo } from '@/types/store'
 interface State {
   userInfo: UserInfo
   token: string
-  netMoudlePrimaryId: number
-  currentNetMoudleDomain: string
-  currentNetMoudleId: string
+  currentNetModulePrimaryId: number
+  currentNetModuleDomain: string
+  currentNetModuleId: string
 }
 
 export const useUserStore = defineStore('userStore', {
@@ -17,9 +17,9 @@ export const useUserStore = defineStore('userStore', {
         userId: '',
       },
       token: '',
-      netMoudlePrimaryId: 0,
-      currentNetMoudleDomain: '',
-      currentNetMoudleId: '',
+      currentNetModulePrimaryId: 0,
+      currentNetModuleDomain: '',
+      currentNetModuleId: '',
     }
   },
   actions: {
