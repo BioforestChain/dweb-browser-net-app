@@ -227,11 +227,6 @@ const onConnectNet = (newValue: any) => {
         type: 'success',
         position: 'top',
       })
-      // 获取tag元素
-      // const tag = document.querySelector(
-      //   '.show-on-connect-net-status',
-      // ) as HTMLElement
-      // console.log('onConnectNet tag', tag?.setAttribute)
       // 判断connect状态
       tagType.value = 'danger'
       console.log('btnOnConnectNet on confirm')
@@ -247,7 +242,7 @@ const onConnectNet = (newValue: any) => {
         type: 'error',
         position: 'top',
       })
-      tagType.value = 'success'
+      // tagType.value = 'success'
       console.log('btnOnConnectNet on cancel')
     })
 }
