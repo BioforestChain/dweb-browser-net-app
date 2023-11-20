@@ -1,5 +1,0 @@
-{
-  "imports": {
-    "dweb/": "https://deno.land/x/dweb@0.1.8/src/"
-  }
-}

@@ -5,6 +5,14 @@ import type { RouteRecordRaw } from 'vue-router'
  * @description 所有路由都在这里集中管理
  */
 const routes: RouteRecordRaw[] = [
+  {
+    path: '/index.html',
+    name: 'index',
+    component: () => import('@/components/NetModules.vue'),
+    meta: {
+      title: 'NetModules',
+    },
+  },
   /**
    * 首页
    * 网络模块

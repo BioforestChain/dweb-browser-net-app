@@ -6,7 +6,8 @@ dist-ssr
 *.local
 coverage
 stats.html
-
+server_bak
+plaoc-dist
 bundle
 
 # 包管理器

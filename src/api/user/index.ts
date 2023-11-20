@@ -13,6 +13,8 @@ import type {
   AppModuleDetail,
   GetAppModuleData,
 } from '@/types'
+
+// api枚举
 enum Api {
   NetModuleReg = '/proxy/user/net-module-reg',
   NetModuleList = '/proxy/user/net-module-list',

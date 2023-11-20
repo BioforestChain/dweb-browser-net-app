@@ -12,6 +12,7 @@
     "dev:prod": "vite --mode prod --host",
     "build": "vue-tsc --noEmit && vite --mode prod build",
     "build:dev": "vue-tsc --noEmit && vite --mode dev build",
+    "build:dev:watch": "vue-tsc --noEmit && vite --mode dev build --watch --minify=false",
     "build:test": "vue-tsc --noEmit && vite --mode test build",
     "preview": "vite preview --host",
     "lint": "eslint src",
@@ -21,12 +22,16 @@
     "mirror:rm": "npm config rm registry",
     "backup": "git add . && git commit -m \"chore: backup\" && git push",
     "up": "npx npm-check-updates -u",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "serve": "vite build --config ./vite.config.server.ts",
+    "serve:watch": "vite build --config ./vite.config.server.ts --watch --minify=false"
   },
   "dependencies": {
     "@bassist/progress": "^0.2.2",
     "@bassist/utils": "^0.13.0",
-    "@plaoc/plugins": "^0.4.1",
+    "@dweb-browser/js-process": "^0.1.4",
+    "@plaoc/plugins": "^0.4.2",
+    "@plaoc/server": "^0.0.7",
     "@vueuse/core": "^10.5.0",
     "axios": "^1.5.1",
     "idb-keyval": "^6.2.1",
@@ -38,6 +43,7 @@
     "vue-toast-notification": "^3.1.2"
   },
   "devDependencies": {
+    "@babel/types": "^7.23.0",
     "@bassist/eslint": "^0.5.0",
     "@bassist/tsconfig": "^0.1.1",
     "@bassist/uno": "^0.1.3",
