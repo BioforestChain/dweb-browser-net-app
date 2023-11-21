@@ -19,34 +19,42 @@ const checked = ref(false)
 const tagType = ref('warning')
 const useRouteObj = useRoute()
 
-const rootDomainValue = ref('')
 const idValue = ref(0)
+const domainValue = ref('') //服务地址
 const portValue = ref(80)
 const keyValue = ref('')
-const subDomainValue = ref('')
-
-const subDomainFormatter = (value: string) => {
-  return value.replace(/[^a-z0-9]/gi, '')
-}
-const portFormatter = (value: string) => {
-  return value.replace(/[^0-9]/gi, '')
-}
-
-const rootDomainFormatter = (value: string) => {
-  // 匹配根域名正则
+const prefixBroadcastAddressValue = ref('')
+const suffixBroadcastAddressValue = ref('')
+const broadcastAddressValue = ref('')
+//broadcast_address
+const regexDomain =
+  /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9][a-z0-9-]{0,61}[a-z0-9]$/
+const prefixBroadcastAddressFormatter = (value: string) => {
+  // return value.replace(/[^a-z0-9]/gi, '')
   if (/[^a-z.\d]/i.test(value)) {
     return ''
   } else {
     return value
   }
 }
-// 校验函数返回 true 表示校验通过，false 表示不通过
-const patternRootDomain = (val: string) => {
-  const regex = /^[a-z0-9]+\.[a-z]+$/
-  if (!regex.test(val)) {
-    return `${val} 不合法的根域名，请重新输入`
+const portFormatter = (value: string) => {
+  return value.replace(/[^0-9]/gi, '')
+}
+// 服务地址格式化
+const rootDomainFormatter = (value: string) => {
+  if (/[^a-z.\d]/i.test(value)) {
+    return ''
+  } else {
+    return value
   }
 }
+// 服务地址校验 校验函数返回 true 表示校验通过，false 表示不通过
+const patternRootDomain = (val: string) => {
+  if (!regexDomain.test(val)) {
+    return `${val} 不合法的域名，请重新输入`
+  }
+}
+
 if (GetUseUserStore.currentNetModuleId.length === 0) {
   GetUseUserStore.currentNetModuleId = GetNetModuleIdValue
 }
@@ -182,10 +190,11 @@ async function GetNetModuleDetail(queryId: any) {
 //填充到form里
 function paddingDataForm(element: any, queryId: any) {
   const targetItem = element
-  rootDomainValue.value = targetItem.root_domain
+  domainValue.value = targetItem.domain
   portValue.value = targetItem.port
-  subDomainValue.value = targetItem.prefix_domain
+  prefixBroadcastAddressValue.value = targetItem.prefix_broadcast_address
   idValue.value = queryId
+  suffixBroadcastAddressValue.value = getSuffixDomain(domainValue.value)
 }
 
 //新增
@@ -258,7 +267,21 @@ const onConnectNet = (newValue: any) => {
 //       id,
 //     },
 //   })
-// }
+
+//suffixBroadcastAddressValue
+function getSuffixDomain(hostname: string): string {
+  const parts = hostname.split('.')
+  suffixBroadcastAddressValue.value =
+    '.' + parts[parts.length - 2] + '.' + parts[parts.length - 1]
+  const span = document.getElementById('mySpan')
+  span.innerText = suffixBroadcastAddressValue.value
+  return suffixBroadcastAddressValue.value
+}
+
+function onBlurInputPrefixBA() {
+  return (broadcastAddressValue.value =
+    prefixBroadcastAddressValue.value + suffixBroadcastAddressValue.value)
+}
 </script>
 
 <!--页面-->
@@ -280,20 +303,20 @@ const onConnectNet = (newValue: any) => {
 
         <van-field v-model="idValue" type="hidden" name="id" />
         <van-field
-          v-model="rootDomainValue"
+          v-model="broadcastAddressValue"
+          type="hidden"
+          name="broadcast_address"
+        />
+        <van-field
+          v-model="domainValue"
           type="text"
           :formatter="rootDomainFormatter"
           label="服务地址(address):"
           placeholder="请输入网络服务地址"
-          name="rootDomain"
+          name="domain"
           required
-          :rules="[
-            {
-              required: true,
-              validator: patternRootDomain,
-            },
-          ]"
-          @blur="rootDomainValue = $event.target.value"
+          :rules="[{ required: true, validator: patternRootDomain }]"
+          @blur="getSuffixDomain(domainValue)"
         />
         <van-field
           v-model="portValue"
@@ -318,16 +341,28 @@ const onConnectNet = (newValue: any) => {
           @blur="keyValue = $event.target.value"
         />
         <van-field
-          v-model="subDomainValue"
-          label="广播:"
-          :formatter="subDomainFormatter"
+          v-model="prefixBroadcastAddressValue"
+          label="广播地址:"
+          :formatter="prefixBroadcastAddressFormatter"
           type="text"
           placeholder="请输入广播地址前缀"
-          name="domain"
           required
           :rules="[{ required: true, message: '请填写正确内容' }]"
-          @blur="subDomainValue = $event.target.value"
-        />
+          label-width="mini"
+          @blur="onBlurInputPrefixBA"
+        >
+          <template #button>
+            <span
+              id="mySpan"
+              size="small"
+              type="text"
+              readonly
+              disabled
+              :title="`${suffixBroadcastAddressValue.value}`"
+              @blur="suffixBroadcastAddressValue = $event.target.value"
+            />
+          </template>
+        </van-field>
 
         <van-field
           v-model="GetNetModuleIdValue"
