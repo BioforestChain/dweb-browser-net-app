@@ -221,8 +221,6 @@ function onClickSelected() {
 .van-cell--selected {
   background-color: #00a508;
 }
-.van-cell--no-selected {
-}
 
 #app {
   width: 100%;
