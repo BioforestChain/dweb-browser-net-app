@@ -1,11 +1,11 @@
 import axios, { AxiosRequestConfig, AxiosError } from 'axios'
-import type { CustomResponseType } from '@/types'
+import { $toast, type CustomResponseType } from '@/types'
 
 const service = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL,
   timeout: 30 * 1000,
   // 请求是否携带cookie
-  withCredentials: true
+  withCredentials: true,
 })
 
 // 请求拦截器
@@ -16,7 +16,7 @@ service.interceptors.request.use(
   },
   (err) => {
     return Promise.reject(err)
-  }
+  },
 )
 
 // 响应拦截器
@@ -30,6 +30,11 @@ service.interceptors.response.use(
     return response
   },
   (err) => {
+    $toast.open({
+      message: err.message,
+      type: 'error',
+      position: 'top',
+    })
     const { status } = err.response
 
     // 根据返回的http状态码做不同的处理，比如错误提示等 TODO
@@ -42,19 +47,19 @@ service.interceptors.response.use(
         break
       case 500:
         // 服务端错误
-        break
 
+        break
       default:
         break
     }
 
     return Promise.reject(err)
-  }
+  },
 )
 
 // 封装一层以更好的统一定义接口返回的类型
 const request = <T>(
-  config: AxiosRequestConfig
+  config: AxiosRequestConfig,
 ): Promise<CustomResponseType<T>> => {
   return new Promise((resolve, reject) => {
     service
