@@ -12,24 +12,37 @@ app.use(async (event) => {
   if (event.pathname == '/cache' && event.method == 'GET') {
     const key = event.searchParams.get('key') as string
 
-    const data = await get(key)
-
-    return Response.json(data)
+    try {
+      const data = await get(key)
+      return Response.json(data)
+    } catch (error) {
+      return Response.json({ success: false, message: error })
+    }
   }
 
   if (event.pathname == '/cache' && event.method == 'POST') {
-    const data = await event.json()
-    console.log('data: ', data)
-    // await set('config', data)
+    try {
+      const data = await event.json()
+      console.log('data: ', data)
 
-    // const result = await rebuildCurrentWs()
-    // return Response.json(result)
+      await set('config', data)
+      return Response.json({ success: true, message: 'ok' })
+    } catch (error) {
+      return Response.json({ success: false, message: error })
+    }
   }
 
   if (event.pathname == '/cache' && event.method == 'DELETE') {
     const key = event.searchParams.get('key') as string
-    await del(key)
+    try {
+      await del(key)
+      return Response.json({ success: true, message: 'ok' })
+    } catch (error) {
+      return Response.json({ success: false, message: error })
+    }
+  }
 
+  if (event.pathname == '/reconnection' && event.method == 'POST') {
     const result = await rebuildCurrentWs()
     return Response.json(result)
   }

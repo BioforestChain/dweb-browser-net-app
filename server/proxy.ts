@@ -5,7 +5,7 @@ import {
   WebsocketBuilder,
   WebsocketEvent,
 } from 'websocket-ts'
-import { get } from 'idb-keyval'
+import { get, update } from 'idb-keyval'
 import {
   $ReadableStreamIpc,
   ReadableStreamIpc,
@@ -15,6 +15,8 @@ import {
   streamReadAll,
   jsProcess,
   simpleEncoder,
+  IpcResponse,
+  IpcHeaders,
 } from '@dweb-browser/js-process'
 
 const wsInstance: PromiseOut<Websocket> = new PromiseOut()
@@ -64,6 +66,7 @@ function initWs(url: string) {
     try {
       serverIPC.bindIncomeStream(proxyStream.stream)
     } catch (error) {
+      saveError(`ipc bindIncomeStream: ${error}`)
       console.error('ipc bindIncomeStream: ', error)
     }
 
@@ -71,6 +74,7 @@ function initWs(url: string) {
       try {
         proxyStream.controller.close()
       } catch (error) {
+        saveError(`proxyStream close: ${error}`)
         console.error('proxyStream close: ', error)
       }
 
@@ -98,8 +102,9 @@ function initWs(url: string) {
           } else {
             throw new Error('should not happend')
           }
-        } catch (err) {
-          console.error('ws message: ', err)
+        } catch (error) {
+          saveError(`ws message: ${error}`)
+          console.error('ws message: ', error)
         }
       },
     )
@@ -114,6 +119,7 @@ function initWs(url: string) {
         try {
           ws.send(chunk)
         } catch (error) {
+          saveError(`ws send: ${error}`)
           console.error('ws send: ', error)
         }
       },
@@ -127,6 +133,7 @@ function initWs(url: string) {
   ws.addEventListener(WebsocketEvent.error, (_: Websocket, event: Event) => {
     waitOpenPo.reject(event)
     wsInstance.reject(event)
+    saveError(`ws onerror: ${event}`)
     console.error('ws onerror: ', event)
     // ws.close()
   })
@@ -152,10 +159,10 @@ const DefaultNetInfo = {
 
 async function initProxy() {
   let wsState: boolean = false
-
   // const netInfo = ((await get('config')) as NetInfo) || DefaultNetInfo
   const netInfo = (await get('config')) as NetInfo
   if (!netInfo || (!netInfo.url && !netInfo.domain)) {
+    saveError('配置不正确')
     console.warn('需要配置网络模块')
     return
   }
@@ -168,6 +175,7 @@ async function initProxy() {
     ipc = await initWs(url)
   } catch (err) {
     console.error('init ws err: ', err)
+    saveError(`init ws err: ${err}`)
     return
   }
 
@@ -194,14 +202,26 @@ async function initProxy() {
       // const u = 'http://external.testmodule.bagen.com.dweb:443/test?client_id=test.bn.com'
       const u = `http://external.${mmid}:443${event.pathname}${event.search}`
 
-      const resp = await jsProcess.nativeFetch(u, {
-        method: event.method,
-        headers: event.headers,
-        body: event.body,
-      })
+      try {
+        const resp = await jsProcess.nativeFetch(u, {
+          method: event.method,
+          headers: event.headers,
+          body: event.body,
+        })
 
-      console.log('forward response: ', resp.status)
-      return resp
+        console.log('forward response: ', resp.status)
+        return resp
+      } catch (error) {
+        saveError(`forward reqeust: ${error}`)
+        const headers = new IpcHeaders({ 'Content-Type': 'application/json' })
+        return IpcResponse.fromJson(
+          event.req_id,
+          400,
+          headers,
+          { success: false, message: error },
+          ipc,
+        )
+      }
     })
     .forbidden()
     .cors()
@@ -222,4 +242,19 @@ export const rebuildCurrentWs = async () => {
 
   const wsState = await initProxy()
   return { success: wsState, message: msg }
+}
+
+const ErrKey = 'errors'
+
+async function saveError(err: any) {
+  update(ErrKey, (val) => {
+    const v = val || []
+    v.push(err)
+
+    if (v.length > 100) {
+      return v.slice(v.length - 100, v.length)
+    }
+
+    return v
+  })
 }

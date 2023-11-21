@@ -9,6 +9,7 @@ stats.html
 server_bak
 plaoc-dist
 bundle
+.vscode
 
 # 包管理器
 # package-lock.json
