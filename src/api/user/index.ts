@@ -73,10 +73,54 @@ export const apiAppModuleList = (values: AppModuleList) => {
     params: values,
   })
 }
+
 export const apiAppModuleDel = (values: GetAppModuleId) => {
   return request<GetAppModuleData>({
     url: Api.AppModuleDel,
     method: 'post',
     data: values,
   })
+}
+
+import { ConfigPlugin } from '@plaoc/plugins'
+
+type Records = {
+  message: []
+}
+
+class IDB extends ConfigPlugin {
+  get<T>(keyVal: string) {
+    const s = new URLSearchParams()
+    s.set('key', keyVal)
+    return this.fetchApi('/cache', { method: 'GET', search: s }).object<T>()
+    // return this.fetchApi('/cache', { method: 'GET', search: s }).jsonlines()
+  }
+
+  set<T>(key: string, val: any) {
+    return this.fetchApi('/cache', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ [key]: val }),
+    }).object<T>()
+  }
+
+  del<T>(keyVal: string) {
+    const s = new URLSearchParams()
+    s.set('key', keyVal)
+
+    return this.fetchApi('/cache', { method: 'DELETE', search: s }).object<T>()
+  }
+}
+const iDB = new IDB()
+
+export function getCache<T>(keyVal: string): Promise<T> {
+  return iDB.get<T>(keyVal)
+}
+
+export function setCache<T>(key: string, val: object): Promise<T> {
+  return iDB.set(key, val)
+}
+
+export function delCache<T>(key: string): Promise<T> {
+  return iDB.del(key)
 }

@@ -1,5 +1,5 @@
 import { Router } from '@plaoc/server/middleware'
-import { get, set } from 'idb-keyval'
+import { get, set, del } from 'idb-keyval'
 import { rebuildCurrentWs } from './proxy'
 
 rebuildCurrentWs()
@@ -19,7 +19,16 @@ app.use(async (event) => {
 
   if (event.pathname == '/cache' && event.method == 'POST') {
     const data = await event.json()
-    await set('config', data)
+    console.log('data: ', data)
+    // await set('config', data)
+
+    // const result = await rebuildCurrentWs()
+    // return Response.json(result)
+  }
+
+  if (event.pathname == '/cache' && event.method == 'DELETE') {
+    const key = event.searchParams.get('key') as string
+    await del(key)
 
     const result = await rebuildCurrentWs()
     return Response.json(result)

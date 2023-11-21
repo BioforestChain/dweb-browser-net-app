@@ -1,13 +1,17 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import type { NetForm, NetModuleDetail } from '@/types'
-import { apiNetModuleReg, apiNetModuleDetail } from '@/api/user'
+import {
+  apiNetModuleReg,
+  apiNetModuleDetail,
+  getCache,
+  setCache,
+} from '@/api/user'
 import { useRoute } from 'vue-router'
 import router from '@/router'
 import { GetNetModuleIdValue, GetUseUserStore } from '@/types'
 import { GetDateStr, $toast } from '@/types'
 import { showConfirmDialog } from 'vant'
-import { get, set } from 'idb-keyval'
 
 defineProps<{ msg: string }>()
 
@@ -55,7 +59,7 @@ async function postNetModuleForm(values: NetForm) {
       GetUseUserStore.currentNetModulePrimaryId = res.data.id
     }
     GetUseUserStore.currentNetModuleDomain = res.data.domain
-    get(GetNetModuleIdValue).then((existingValue) => {
+    getCache(GetNetModuleIdValue).then((existingValue) => {
       if (existingValue === undefined || existingValue === null) {
         console.log(GetDateStr + ' existingValue ', existingValue)
         net_list.push(res.data)
@@ -63,7 +67,7 @@ async function postNetModuleForm(values: NetForm) {
           GetDateStr.value + ' postNetModuleForm net_list1 ',
           net_list,
         )
-        set(GetNetModuleIdValue, net_list)
+        setCache(GetNetModuleIdValue, net_list)
       } else {
         const index = net_list.findIndex((item) => item.id == res.data.id)
         //遍历存在的 然后当下提交的是最新的，若有相同的id覆盖之
@@ -77,7 +81,7 @@ async function postNetModuleForm(values: NetForm) {
           GetDateStr.value + ' postNetModuleForm net_list2 ',
           net_list,
         )
-        set(GetNetModuleIdValue, net_list)
+        setCache(GetNetModuleIdValue, net_list)
       }
     })
 

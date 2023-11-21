@@ -1,11 +1,10 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 // import type { NetModuleList } from '@/types'
-import { apiNetModuleList } from '@/api/user'
+import { apiNetModuleList, getCache, setCache, delCache } from '@/api/user'
 import type { NetModuleDetail } from '@/types'
 import { GetNetModuleIdValue, GetDateStr, $toast } from '@/types'
 import router from '@/router'
-import { del, get, set } from 'idb-keyval'
 
 defineProps<{ msg: string }>()
 const selectedIndex = ref(-1)
@@ -50,7 +49,8 @@ async function getModuleList() {
     finished.value = true // 停止加载
   }
   // const existingValue = localStorage.getItem(GetNetModuleIdValue)
-  get(GetNetModuleIdValue).then((existingValue) => {
+  type NetModuleDetails = NetModuleDetail[] | undefined | null
+  getCache<NetModuleDetails>(GetNetModuleIdValue).then((existingValue) => {
     if (existingValue != null || existingValue != undefined) {
       // 解析成数组
       const cleanedData = removeDuplicates(existingValue)
@@ -65,7 +65,7 @@ async function getModuleList() {
         total = res.data.total
         if (total == count) {
           netModuleList.value.push(...cleanedData)
-          set(GetNetModuleIdValue, cleanedData)
+          setCache(GetNetModuleIdValue, cleanedData)
           // localStorage.setItem(GetNetModuleIdValue, JSON.stringify(cleanedData))
         } else {
           netModuleList.value.push(...res.data.list)
@@ -89,13 +89,13 @@ async function getModuleList() {
           existingValue === '[]'
         ) {
           // localStorage.removeItem(GetNetModuleIdValue)
-          del(GetNetModuleIdValue)
+          delCache(GetNetModuleIdValue)
         } else {
           net_list = existingValue
         }
         net_list.push(...res.data.list)
         console.log(GetDateStr.value + ' net_list', net_list)
-        set(GetNetModuleIdValue, net_list)
+        setCache(GetNetModuleIdValue, net_list)
         // localStorage.setItem(GetNetModuleIdValue, JSON.stringify(net_list))
         netModuleList.value.push(...res.data.list)
       }
@@ -134,7 +134,7 @@ onMounted(async () => {
 const onRefresh = () => {
   // 清空列表数据
   // localStorage.removeItem(getNetModuleId)
-  del(GetNetModuleIdValue)
+  delCache(GetNetModuleIdValue)
   finished.value = false
   // 重新加载数据
   // 将 loading 设置为 true，表示处于加载状态

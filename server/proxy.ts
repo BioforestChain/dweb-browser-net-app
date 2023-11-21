@@ -155,7 +155,7 @@ async function initProxy() {
 
   // const netInfo = ((await get('config')) as NetInfo) || DefaultNetInfo
   const netInfo = (await get('config')) as NetInfo
-  if (!netInfo.url && !netInfo.domain) {
+  if (!netInfo || (!netInfo.url && !netInfo.domain)) {
     console.warn('需要配置网络模块')
     return
   }
