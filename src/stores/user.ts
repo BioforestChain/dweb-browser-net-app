@@ -4,6 +4,9 @@ import { UserInfo } from '@/types/store'
 interface State {
   userInfo: UserInfo
   token: string
+  currentNetModulePrimaryId: number
+  currentNetModuleDomain: string
+  currentNetModuleId: string
 }
 
 export const useUserStore = defineStore('userStore', {
@@ -11,9 +14,12 @@ export const useUserStore = defineStore('userStore', {
     return {
       userInfo: {
         userName: '',
-        userId: ''
+        userId: '',
       },
-      token: ''
+      token: '',
+      currentNetModulePrimaryId: 0,
+      currentNetModuleDomain: '',
+      currentNetModuleId: '',
     }
   },
   actions: {
@@ -23,6 +29,9 @@ export const useUserStore = defineStore('userStore', {
      */
     changeUserName(userInfo: UserInfo) {
       this.userInfo = userInfo
-    }
-  }
+    },
+  },
+  persist: {
+    storage: localStorage,
+  },
 })
