@@ -18,6 +18,7 @@ import {
   IpcResponse,
   IpcHeaders,
 } from '@dweb-browser/js-process'
+import manifest from '../manifest.json'
 
 const wsInstance: PromiseOut<Websocket> = new PromiseOut()
 
@@ -157,10 +158,12 @@ const DefaultNetInfo = {
   net_id: 'netmodule.bagen.com.dweb',
 } as NetInfo
 
+const netConfigKey = manifest.id
+
 async function initProxy() {
   let wsState: boolean = false
   // const netInfo = ((await get('config')) as NetInfo) || DefaultNetInfo
-  const netInfo = (await get('config')) as NetInfo
+  const netInfo = (await get(netConfigKey)) as NetInfo
   if (!netInfo || (!netInfo.url && !netInfo.domain)) {
     saveError('配置不正确')
     console.warn('需要配置网络模块')
