@@ -483,8 +483,6 @@ code {
   right: 0;
   bottom: 0;
   z-index: -999;
-  border: solid;
-  /*border: solid;*/
 }
 .green {
   color: #00a508;
