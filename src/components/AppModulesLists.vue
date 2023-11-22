@@ -168,6 +168,8 @@ function handleDel(id: number) {
 function onClickSelected() {
   return (selectedIndex.value = 1)
 }
+//nav-bar
+const onClickLeft = () => history.back()
 </script>
 
 <template>
@@ -175,7 +177,10 @@ function onClickSelected() {
     <van-nav-bar
       title="App模块配置列表"
       right-text="新增"
+      left-text="返回"
+      left-arrow
       @click-right="handleAdd"
+      @click-left="onClickLeft"
     />
     <van-pull-refresh v-model="refreshing" @refresh="onRefresh">
       <van-list
