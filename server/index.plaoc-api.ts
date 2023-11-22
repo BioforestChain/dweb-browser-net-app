@@ -3,7 +3,7 @@ import { get, set, del } from 'idb-keyval'
 import { rebuildCurrentWs, shutdownCurrentWs } from './proxy'
 import manifest from '../manifest.json'
 
-rebuildCurrentWs()
+// rebuildCurrentWs()
 
 const app = new Router()
 

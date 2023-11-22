@@ -7,6 +7,7 @@ import {
   setCache,
   getCache,
   reconnect,
+  shutdown,
 } from '@/api/user'
 import { useRoute } from 'vue-router'
 import router from '@/router'
@@ -256,12 +257,15 @@ const onConnectNet = (newValue: any) => {
     theme: 'round-button',
     closeOnPopstate: true,
   })
-    .then(() => {
+    .then(async () => {
+      await shutdown()
+
       $toast.open({
         message: '断开!',
         type: 'success',
         position: 'top',
       })
+
       // 判断connect状态
       tagType.value = 'danger'
       console.log('btnOnConnectNet on confirm')
