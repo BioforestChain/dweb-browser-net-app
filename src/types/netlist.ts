@@ -29,6 +29,7 @@ export interface NetModuleDetail {
   created_at: string
   update_at: string
   is_selected: number
+  secret: string
 }
 
 export interface NetModuleList {
