@@ -75,30 +75,6 @@ const routes: RouteRecordRaw[] = [
       title: 'AppModules',
     },
   },
-  /**
-   * 子路由示例
-   */
-  {
-    path: '/foo',
-    name: 'foo',
-    component: () => import('@/components/TransferStation.vue'),
-    meta: {
-      title: 'Foo',
-    },
-    redirect: {
-      name: 'bar',
-    },
-    children: [
-      {
-        path: 'bar',
-        name: 'bar',
-        component: () => import('@/views/foo/bar.vue'),
-        meta: {
-          title: 'Bar',
-        },
-      },
-    ],
-  },
 ]
 
 export default routes

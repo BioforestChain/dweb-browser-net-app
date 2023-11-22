@@ -143,35 +143,42 @@ function initWs(url: string) {
 }
 
 interface NetInfo {
-  url: string
+  domain: string
   port: number
   secret: string
-  domain: string
+  broadcast_address: string
   net_id: string
 }
 
-const DefaultNetInfo = {
-  url: 'ws://127.0.0.1',
-  port: 8000,
-  secret: 'test',
-  domain: 'test.bn.com',
-  net_id: 'netmodule.bagen.com.dweb',
-} as NetInfo
+// const DefaultNetInfo = {
+//   url: 'ws://127.0.0.1',
+//   port: 8000,
+//   secret: 'test',
+//   domain: 'test.bn.com',
+//   net_id: 'netmodule.bagen.com.dweb',
+// } as NetInfo
 
 const netConfigKey = manifest.id
 
 async function initProxy() {
   let wsState: boolean = false
   // const netInfo = ((await get('config')) as NetInfo) || DefaultNetInfo
-  const netInfo = (await get(netConfigKey)) as NetInfo
-  if (!netInfo || (!netInfo.url && !netInfo.domain)) {
+  const netInfos = await get<NetInfo[] | undefined>(netConfigKey)
+  console.log('netInfos: ', netInfos)
+  if (!netInfos) {
+    return
+  }
+
+  const netInfo = netInfos[0]
+  if (!netInfo || !netInfo.domain || !netInfo.broadcast_address) {
     saveError('配置不正确')
     console.warn('需要配置网络模块')
     return
   }
 
+  netInfo.secret = '8ab6c8dee22768da1503351069f032cb'
   // const url = 'ws://127.0.0.1:8000/proxy/ws?secret=111&client_id=test.bn.com&domain=test.bn.com'
-  const url = `${netInfo.url}:${netInfo.port}/proxy1/ws?secret=${netInfo.secret}&client_id=${netInfo.domain}&domain=${netInfo.domain}`
+  const url = `ws://${netInfo.domain}:${netInfo.port}/proxy/ws?secret=${netInfo.secret}&client_id=${netInfo.broadcast_address}&domain=${netInfo.broadcast_address}`
 
   let ipc: $ReadableStreamIpc
   try {

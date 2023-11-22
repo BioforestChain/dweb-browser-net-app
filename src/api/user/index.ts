@@ -84,11 +84,11 @@ export const apiAppModuleDel = (values: GetAppModuleId) => {
 
 import { ConfigPlugin } from '@plaoc/plugins'
 
-type Records = {
-  message: []
-}
-
 class IDB extends ConfigPlugin {
+  reconnect<T>() {
+    return this.fetchApi('/reconnection', { method: 'POST' }).object<T>()
+  }
+
   get<T>(keyVal: string) {
     const s = new URLSearchParams()
     s.set('key', keyVal)
@@ -112,6 +112,10 @@ class IDB extends ConfigPlugin {
   }
 }
 const iDB = new IDB()
+
+export function reconnect<T>(): Promise<T> {
+  return iDB.reconnect<T>()
+}
 
 export function getCache<T>(keyVal: string): Promise<T> {
   return iDB.get<T>(keyVal)

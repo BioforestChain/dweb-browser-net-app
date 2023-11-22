@@ -6,6 +6,7 @@ import {
   apiNetModuleDetail,
   getCache,
   setCache,
+  reconnect,
 } from '@/api/user'
 import { useRoute } from 'vue-router'
 import router from '@/router'
@@ -67,31 +68,36 @@ async function postNetModuleForm(values: NetForm) {
       GetUseUserStore.currentNetModulePrimaryId = res.data.id
     }
     GetUseUserStore.currentNetModuleDomain = res.data.domain
-    getCache(GetNetModuleIdValue).then((existingValue) => {
-      if (existingValue === undefined || existingValue === null) {
-        console.log(GetDateStr + ' existingValue ', existingValue)
-        net_list.push(res.data)
-        console.log(
-          GetDateStr.value + ' postNetModuleForm net_list1 ',
-          net_list,
-        )
-        setCache(GetNetModuleIdValue, net_list)
-      } else {
-        const index = net_list.findIndex((item) => item.id == res.data.id)
-        //遍历存在的 然后当下提交的是最新的，若有相同的id覆盖之
-        if (index !== -1) {
-          net_list[index] = res.data
-        } else {
-          //否则新增
+    getCache(GetNetModuleIdValue)
+      .then(async (existingValue) => {
+        if (existingValue === undefined || existingValue === null) {
+          console.log(GetDateStr + ' existingValue ', existingValue)
           net_list.push(res.data)
+          console.log(
+            GetDateStr.value + ' postNetModuleForm net_list1 ',
+            net_list,
+          )
+        } else {
+          const index = net_list.findIndex((item) => item.id == res.data.id)
+          //遍历存在的 然后当下提交的是最新的，若有相同的id覆盖之
+          if (index !== -1) {
+            net_list[index] = res.data
+          } else {
+            //否则新增
+            net_list.push(res.data)
+          }
+          console.log(
+            GetDateStr.value + ' postNetModuleForm net_list2 ',
+            net_list,
+          )
         }
-        console.log(
-          GetDateStr.value + ' postNetModuleForm net_list2 ',
-          net_list,
-        )
-        setCache(GetNetModuleIdValue, net_list)
-      }
-    })
+
+        setCache(GetNetModuleIdValue, net_list).then(async () => {
+          const wsRes = await reconnect<{ success: boolean; message: string }>()
+          console.log('ws res: ', wsRes)
+        })
+      })
+      .catch((err) => console.error(err))
 
     $toast.open({
       message: '提交成功!',
@@ -99,6 +105,7 @@ async function postNetModuleForm(values: NetForm) {
       position: 'top',
     })
     tagType.value = 'success'
+
     //TODO 后期视体验升级 跳列表页面
     // router.push({
     //   name: 'net-module-list',
