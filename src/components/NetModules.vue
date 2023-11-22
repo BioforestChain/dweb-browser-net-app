@@ -66,6 +66,8 @@ function showConnStatusMsg(wsRes: any) {
   wsRes.message = '恭喜连接成功!!!'
   const span = document.getElementById('showConnStatusMsg')
   console.log(GetDateStr + ' showConnStatusMsg ', wsRes)
+  const load = document.getElementById('loading')
+  load.style.display = 'none'
   if (wsRes.success) {
     span.className = 'green'
   } else {
@@ -117,7 +119,6 @@ async function postNetModuleForm(values: NetForm) {
         setCache(GetNetModuleIdValue, net_list).then(async () => {
           const wsRes = await reconnect<{ success: boolean; message: string }>()
           console.log(GetDateStr + ' ws res: ', wsRes)
-          wsRes.message = '恭喜连接成功!!!'
           showConnStatusMsg(wsRes)
           if (wsRes.success) {
             $toast.open({
@@ -235,9 +236,10 @@ function paddingDataForm(element: any, queryId: any) {
 //新增
 let throttleBool = true //全局变量
 const onSubmit = (values: NetForm) => {
+  const load = document.getElementById('loading')
+  load.style.display = 'block'
   if (throttleBool) {
     //第一次执行，之后五秒内不再执行
-    //此处写需要触发的函数\方法
     idValue.value = GetUseUserStore.currentNetModulePrimaryId
     values.id = GetUseUserStore.currentNetModulePrimaryId
     postNetModuleForm(values)
@@ -272,7 +274,8 @@ const onConnectNet = (newValue: any) => {
   })
     .then(async () => {
       await shutdown()
-
+      const load = document.getElementById('loading')
+      load.style.display = 'block'
       $toast.open({
         message: '断开!',
         type: 'success',
@@ -426,6 +429,9 @@ function onBlurInputPrefixBA() {
           @blur="GetNetModuleIdValue = $event.target.value"
         />
       </van-cell-group>
+      <div id="loading-div">
+        <van-loading id="loading" type="spinner" color="#1989fa" />
+      </div>
       <div class="button-container">
         <van-button type="danger" round block @click="onConnectNet">
           断开连接
@@ -482,6 +488,17 @@ a {
 label {
   margin: 0 0.5em;
   font-weight: bold;
+}
+#loading-div {
+  text-align: center; /*让div内部文字居中*/
+  border-radius: 1rem;
+  position: relative;
+  display: flex;
+  align-items: center;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  justify-content: center;
 }
 
 code {

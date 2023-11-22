@@ -24,6 +24,7 @@ import {
   Popup,
   CheckboxGroup,
   Checkbox,
+  Loading,
 } from 'vant'
 import 'vant/lib/index.css'
 import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'
@@ -54,4 +55,5 @@ createApp(App)
   .use(Checkbox)
   .use(TabbarItem)
   .use(ToastPlugin)
+  .use(Loading)
   .mount('#app')
