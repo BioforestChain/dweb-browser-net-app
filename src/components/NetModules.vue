@@ -4,8 +4,8 @@ import type { NetForm, NetModuleDetail } from '@/types'
 import {
   apiNetModuleReg,
   apiNetModuleDetail,
-  getCache,
   setCache,
+  getCache,
   reconnect,
 } from '@/api/user'
 import { useRoute } from 'vue-router'
@@ -13,6 +13,7 @@ import router from '@/router'
 import { GetNetModuleIdValue, GetUseUserStore } from '@/types'
 import { GetDateStr, $toast } from '@/types'
 import { showConfirmDialog } from 'vant'
+// import { del, get, set } from 'idb-keyval'
 
 defineProps<{ msg: string }>()
 
@@ -60,10 +61,23 @@ if (GetUseUserStore.currentNetModuleId.length === 0) {
   GetUseUserStore.currentNetModuleId = GetNetModuleIdValue
 }
 const net_list: NetModuleDetail[] = []
+/*Tips 提示语*/
+function showConnStatusMsg(wsRes: object) {
+  wsRes.message = '恭喜连接成功!!!'
+  const span = document.getElementById('showConnStatusMsg')
+  if (wsRes.success) {
+    span.className = 'green'
+  } else {
+    wsRes.message = '您已断开连接!!!'
+    span.className = 'red'
+  }
+  span.innerText = wsRes.message
+}
 
 async function postNetModuleForm(values: NetForm) {
   const res = await apiNetModuleReg(values)
   if (res.code == 0 && res.data.id > 0) {
+    res.data.secret = keyValue
     if (GetUseUserStore.currentNetModulePrimaryId == 0) {
       GetUseUserStore.currentNetModulePrimaryId = res.data.id
     }
@@ -91,10 +105,11 @@ async function postNetModuleForm(values: NetForm) {
             net_list,
           )
         }
-
+        //Tips
         setCache(GetNetModuleIdValue, net_list).then(async () => {
           const wsRes = await reconnect<{ success: boolean; message: string }>()
           console.log('ws res: ', wsRes)
+          showConnStatusMsg(wsRes)
         })
       })
       .catch((err) => console.error(err))
@@ -250,6 +265,12 @@ const onConnectNet = (newValue: any) => {
       // 判断connect状态
       tagType.value = 'danger'
       console.log('btnOnConnectNet on confirm')
+      const wsRes = {
+        success: false,
+        message: '',
+      }
+      showConnStatusMsg(wsRes)
+
       if (newValue) {
         console.log('btnOnConnectNet checked.value', checked.value)
         checked.value = newValue
@@ -262,6 +283,7 @@ const onConnectNet = (newValue: any) => {
         type: 'error',
         position: 'top',
       })
+
       // tagType.value = 'success'
       console.log('btnOnConnectNet on cancel')
     })
@@ -277,12 +299,14 @@ const onConnectNet = (newValue: any) => {
 
 //suffixBroadcastAddressValue
 function getSuffixDomain(hostname: string): string {
-  const parts = hostname.split('.')
-  suffixBroadcastAddressValue.value =
-    '.' + parts[parts.length - 2] + '.' + parts[parts.length - 1]
-  const span = document.getElementById('mySpan')
-  span.innerText = suffixBroadcastAddressValue.value
-  return suffixBroadcastAddressValue.value
+  if (regexDomain.test(hostname)) {
+    const parts = hostname.split('.')
+    suffixBroadcastAddressValue.value =
+      '.' + parts[parts.length - 2] + '.' + parts[parts.length - 1]
+    const span = document.getElementById('mySpan')
+    span.innerText = suffixBroadcastAddressValue.value
+    return suffixBroadcastAddressValue.value
+  }
 }
 
 function onBlurInputPrefixBA() {
@@ -365,7 +389,6 @@ function onBlurInputPrefixBA() {
               type="text"
               readonly
               disabled
-              :title="`${suffixBroadcastAddressValue.value}`"
               @blur="suffixBroadcastAddressValue = $event.target.value"
             />
           </template>
@@ -386,6 +409,9 @@ function onBlurInputPrefixBA() {
         />
       </van-cell-group>
       <div class="button-container">
+        <van-button type="danger" round block @click="onConnectNet">
+          断开连接
+        </van-button>
         <van-button
           round
           block
@@ -395,9 +421,15 @@ function onBlurInputPrefixBA() {
         >
           提交配置
         </van-button>
-        <van-button type="danger" round block @click="onConnectNet">
-          断开连接
-        </van-button>
+      </div>
+      <div>
+        <span
+          id="showConnStatusMsg"
+          size="small"
+          type="text"
+          readonly
+          disabled
+        />
       </div>
     </van-form>
   </div>
@@ -439,5 +471,27 @@ code {
   color: #304455;
   background-color: #eee;
   border-radius: 4px;
+}
+#showConnStatusMsg {
+  /*margin: 2rem;*/
+  /*display: flex;*/
+  text-align-all: center;
+  text-align: center; /*让div内部文字居中*/
+  /*background-color: #fff;*/
+  border-radius: 20px;
+  width: 300px;
+  height: 350px;
+  margin: auto;
+  position: absolute;
+  /*top: 0;*/
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+.green {
+  color: #00a508;
+}
+.red {
+  color: #ef4444;
 }
 </style>
