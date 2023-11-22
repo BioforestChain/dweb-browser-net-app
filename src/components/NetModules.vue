@@ -73,6 +73,13 @@ function showConnStatusMsg(wsRes: object) {
   }
   span.innerText = wsRes.message
 }
+//回填
+getCache(GetNetModuleIdValue).then(async (existingValue) => {
+  console.log(GetDateStr + ' init existingValue: ', existingValue)
+  if (existingValue[0].id > 0) {
+    paddingDataForm(existingValue[0], existingValue[0].id)
+  }
+})
 
 async function postNetModuleForm(values: NetForm) {
   const res = await apiNetModuleReg(values)
@@ -85,7 +92,7 @@ async function postNetModuleForm(values: NetForm) {
     getCache(GetNetModuleIdValue)
       .then(async (existingValue) => {
         if (existingValue === undefined || existingValue === null) {
-          console.log(GetDateStr + ' existingValue ', existingValue)
+          console.log(GetDateStr + ' post existingValue ', existingValue)
           net_list.push(res.data)
           console.log(
             GetDateStr.value + ' postNetModuleForm net_list1 ',
@@ -111,15 +118,15 @@ async function postNetModuleForm(values: NetForm) {
           console.log('ws res: ', wsRes)
           showConnStatusMsg(wsRes)
         })
+
+        $toast.open({
+          message: '提交成功!',
+          type: 'success',
+          position: 'top',
+        })
+        tagType.value = 'success'
       })
       .catch((err) => console.error(err))
-
-    $toast.open({
-      message: '提交成功!',
-      type: 'success',
-      position: 'top',
-    })
-    tagType.value = 'success'
 
     //TODO 后期视体验升级 跳列表页面
     // router.push({
@@ -214,6 +221,7 @@ function paddingDataForm(element: any, queryId: any) {
   const targetItem = element
   domainValue.value = targetItem.domain
   portValue.value = targetItem.port
+  keyValue.value = targetItem.secret
   prefixBroadcastAddressValue.value = targetItem.prefix_broadcast_address
   idValue.value = queryId
   suffixBroadcastAddressValue.value = getSuffixDomain(domainValue.value)
@@ -419,7 +427,7 @@ function onBlurInputPrefixBA() {
           type="primary"
           native-type="submit"
         >
-          提交配置
+          启动连接
         </van-button>
       </div>
       <div>
