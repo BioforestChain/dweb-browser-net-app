@@ -9,7 +9,6 @@ import {
   reconnect,
 } from '@/api/user'
 import { useRoute } from 'vue-router'
-import router from '@/router'
 import { GetNetModuleIdValue, GetUseUserStore } from '@/types'
 import { GetDateStr, $toast } from '@/types'
 import { showConfirmDialog } from 'vant'
@@ -219,12 +218,14 @@ async function GetNetModuleDetail(queryId: any) {
 //填充到form里
 function paddingDataForm(element: any, queryId: any) {
   const targetItem = element
+  idValue.value = queryId
   domainValue.value = targetItem.domain
   portValue.value = targetItem.port
   keyValue.value = targetItem.secret
   prefixBroadcastAddressValue.value = targetItem.prefix_broadcast_address
-  idValue.value = queryId
   suffixBroadcastAddressValue.value = getSuffixDomain(domainValue.value)
+  broadcastAddressValue.value =
+    prefixBroadcastAddressValue.value + suffixBroadcastAddressValue.value
 }
 
 //新增
@@ -244,17 +245,7 @@ const onFailed = (errorInfo: NetForm[]) => {
   console.log('failed', errorInfo)
 }
 //nav-bar
-// const onClickLeft = () => history.back()
-const onClickLeft = () => {
-  // 执行路由跳转
-  router.push({
-    name: 'net-module-list',
-  })
-  // router.push('/path/to/route')
-}
-// function tagType() {
-//   return is_connected.value ? 'success' : 'danger'
-// }
+const onClickLeft = () => history.back()
 
 const onConnectNet = (newValue: any) => {
   console.log('btnOnConnectNet newV', newValue)
@@ -326,6 +317,12 @@ function onBlurInputPrefixBA() {
 <!--页面-->
 <template>
   <div id="app">
+    <van-nav-bar
+      title="网络模块配置"
+      left-text="返回"
+      left-arrow
+      @click-left="onClickLeft"
+    />
     <van-form @failed="onFailed" @submit="onSubmit">
       <van-nav-bar title="网络模块配置" @click-left="onClickLeft" />
       <van-cell-group inset>
