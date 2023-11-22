@@ -1,6 +1,6 @@
 import { Router } from '@plaoc/server/middleware'
 import { get, set, del } from 'idb-keyval'
-import { rebuildCurrentWs } from './proxy'
+import { rebuildCurrentWs, shutdownCurrentWs } from './proxy'
 import manifest from '../manifest.json'
 
 rebuildCurrentWs()
@@ -12,6 +12,7 @@ const prefixpath = '/config.sys.dweb'
 app.use(async (event) => {
   console.log('api server:=>', event.request.url)
 
+  // 获取indexedDB数据
   if (event.pathname == `${prefixpath}/cache` && event.method == 'GET') {
     const key = event.searchParams.get('key') as string
 
@@ -23,6 +24,7 @@ app.use(async (event) => {
     }
   }
 
+  // 更新indexedDB数据
   if (event.pathname == `${prefixpath}/cache` && event.method == 'POST') {
     try {
       const data = await event.json()
@@ -34,6 +36,7 @@ app.use(async (event) => {
     }
   }
 
+  // 删除indexedDB数据
   if (event.pathname == `${prefixpath}/cache` && event.method == 'DELETE') {
     const key = event.searchParams.get('key') as string
     try {
@@ -44,11 +47,18 @@ app.use(async (event) => {
     }
   }
 
+  // websocket重新连接
   if (
     event.pathname == `${prefixpath}/reconnection` &&
     event.method == 'POST'
   ) {
     const result = await rebuildCurrentWs()
+    return Response.json(result)
+  }
+
+  // 断开websocket连接
+  if (event.pathname == `${prefixpath}/reconnection` && event.method == 'PUT') {
+    const result = await shutdownCurrentWs()
     return Response.json(result)
   }
 

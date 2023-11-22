@@ -260,6 +260,15 @@ export const rebuildCurrentWs = async () => {
   return { success: wsState, message: msg }
 }
 
+export const shutdownCurrentWs = async () => {
+  if (wsInstance.is_resolved || wsInstance.is_rejected) {
+    const ws = await wsInstance.promise
+    ws.close()
+  }
+
+  return { success: true, message: '已关闭' }
+}
+
 const ErrKey = 'errors'
 
 async function saveError(err: any) {
