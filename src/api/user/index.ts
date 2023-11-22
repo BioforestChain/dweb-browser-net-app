@@ -89,11 +89,14 @@ class IDB extends ConfigPlugin {
     return this.fetchApi('/reconnection', { method: 'POST' }).object<T>()
   }
 
+  shutdown<T>() {
+    return this.fetchApi('/reconnection', { method: 'PUT' }).object<T>()
+  }
+
   get<T>(keyVal: string) {
     const s = new URLSearchParams()
     s.set('key', keyVal)
     return this.fetchApi('/cache', { method: 'GET', search: s }).object<T>()
-    // return this.fetchApi('/cache', { method: 'GET', search: s }).jsonlines()
   }
 
   set<T>(key: string, val: any) {
@@ -115,6 +118,10 @@ const iDB = new IDB()
 
 export function reconnect<T>(): Promise<T> {
   return iDB.reconnect<T>()
+}
+
+export function shutdown<T>(): Promise<T> {
+  return iDB.shutdown<T>()
 }
 
 export function getCache<T>(keyVal: string): Promise<T> {

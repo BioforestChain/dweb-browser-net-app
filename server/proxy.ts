@@ -71,16 +71,21 @@ function initWs(url: string) {
       console.error('ipc bindIncomeStream: ', error)
     }
 
-    ws.addEventListener(WebsocketEvent.close, () => {
-      try {
-        proxyStream.controller.close()
-      } catch (error) {
-        saveError(`proxyStream close: ${error}`)
-        console.error('proxyStream close: ', error)
-      }
+    ws.addEventListener(
+      WebsocketEvent.close,
+      (_: Websocket, event: CloseEvent) => {
+        console.error('ws close: ', event)
 
-      serverIPC.close()
-    })
+        try {
+          proxyStream.controller.close()
+        } catch (error) {
+          saveError(`proxyStream close: ${error}`)
+          console.error('proxyStream close: ', error)
+        }
+
+        serverIPC.close()
+      },
+    )
 
     waitOpenPo.onError((event) => {
       proxyStream.controller.error((event as ErrorEvent).error)
@@ -150,19 +155,10 @@ interface NetInfo {
   net_id: string
 }
 
-// const DefaultNetInfo = {
-//   url: 'ws://127.0.0.1',
-//   port: 8000,
-//   secret: 'test',
-//   domain: 'test.bn.com',
-//   net_id: 'netmodule.bagen.com.dweb',
-// } as NetInfo
-
 const netConfigKey = manifest.id
 
 async function initProxy() {
   let wsState: boolean = false
-  // const netInfo = ((await get('config')) as NetInfo) || DefaultNetInfo
   const netInfos = await get<NetInfo[] | undefined>(netConfigKey)
   console.log('netInfos: ', netInfos)
   if (!netInfos) {
@@ -176,7 +172,8 @@ async function initProxy() {
     return
   }
 
-  netInfo.secret = '8ab6c8dee22768da1503351069f032cb'
+  // TODO for test
+  netInfo.domain = '127.0.0.1'
   // const url = 'ws://127.0.0.1:8000/proxy/ws?secret=111&client_id=test.bn.com&domain=test.bn.com'
   const url = `ws://${netInfo.domain}:${netInfo.port}/proxy/ws?secret=${netInfo.secret}&client_id=${netInfo.broadcast_address}&domain=${netInfo.broadcast_address}`
 
@@ -252,6 +249,16 @@ export const rebuildCurrentWs = async () => {
 
   const wsState = await initProxy()
   return { success: wsState, message: msg }
+}
+
+export const shutdownCurrentWs = async () => {
+  if (wsInstance.is_finished) {
+    const ws = await wsInstance.promise
+    console.log('wsInstance: ', wsInstance)
+    ws.close()
+  }
+
+  return { success: true, message: '已关闭' }
 }
 
 const ErrKey = 'errors'
