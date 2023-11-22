@@ -1,5 +1,5 @@
 import {
-  ArrayQueue,
+  RingQueue,
   ConstantBackoff,
   Websocket,
   WebsocketBuilder,
@@ -20,7 +20,7 @@ import {
 } from '@dweb-browser/js-process'
 import manifest from '../manifest.json'
 
-const wsInstance: PromiseOut<Websocket> = new PromiseOut()
+let wsInstance: PromiseOut<Websocket> = new PromiseOut()
 
 function createWs(
   url: string,
@@ -29,13 +29,14 @@ function createWs(
 ): Websocket {
   console.log('ws url: ', url)
   const ws = new WebsocketBuilder(url)
-    .withBuffer(new ArrayQueue())
+    .withBuffer(new RingQueue(100))
     .withBackoff(new ConstantBackoff(reconnectDuration))
     .withMaxRetries(maxRetries)
     .build()
 
   ws.binaryType = 'arraybuffer'
 
+  wsInstance = new PromiseOut()
   wsInstance.resolve(ws)
 
   return ws
@@ -160,7 +161,6 @@ const netConfigKey = manifest.id
 async function initProxy() {
   let wsState: boolean = false
   const netInfos = await get<NetInfo[] | undefined>(netConfigKey)
-  console.log('netInfos: ', netInfos)
   if (!netInfos) {
     return
   }
@@ -172,11 +172,15 @@ async function initProxy() {
     return
   }
 
+  let url: string
   // TODO for test
-  netInfo.domain = '127.0.0.1'
-  // const url = 'ws://127.0.0.1:8000/proxy/ws?secret=111&client_id=test.bn.com&domain=test.bn.com'
-  const url = `ws://${netInfo.domain}:${netInfo.port}/proxy/ws?secret=${netInfo.secret}&client_id=${netInfo.broadcast_address}&domain=${netInfo.broadcast_address}`
+  if (netInfo.broadcast_address == 'c.b.com') {
+    url = `ws://127.0.0.1:${netInfo.port}/proxy/ws?secret=${netInfo.secret}&client_id=${netInfo.broadcast_address}&domain=${netInfo.broadcast_address}`
+  } else {
+    url = `ws://${netInfo.domain}:${netInfo.port}/proxy/ws?secret=${netInfo.secret}&client_id=${netInfo.broadcast_address}&domain=${netInfo.broadcast_address}`
+  }
 
+  // const url = 'ws://127.0.0.1:8000/proxy/ws?secret=111&client_id=test.bn.com&domain=test.bn.com'
   let ipc: $ReadableStreamIpc
   try {
     ipc = await initWs(url)
@@ -190,14 +194,11 @@ async function initProxy() {
 
   ipc
     .onFetch(async (event) => {
-      console.log('net app event: ', event)
       const url = new URL(event.request.url)
 
-      console.log('forward url: ', url, netInfo)
+      console.log('forward url: ', url, event, netInfo)
 
-      // TODO for test
-      if (url.hostname == '127.0.0.1') {
-      } else if (url.hostname !== netInfo.domain) {
+      if (url.hostname !== netInfo.broadcast_address) {
         return Response.json({ success: false, message: 'invalid request' })
       }
 
@@ -237,7 +238,7 @@ async function initProxy() {
 }
 
 export const rebuildCurrentWs = async () => {
-  if (wsInstance.is_resolved || wsInstance.is_rejected) {
+  if (wsInstance.is_finished) {
     const ws = await wsInstance.promise
     ws.close()
   }
