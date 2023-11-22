@@ -77,7 +77,7 @@ function showConnStatusMsg(wsRes: object) {
 async function postNetModuleForm(values: NetForm) {
   const res = await apiNetModuleReg(values)
   if (res.code == 0 && res.data.id > 0) {
-    res.data.secret = keyValue
+    res.data.secret = keyValue.value
     if (GetUseUserStore.currentNetModulePrimaryId == 0) {
       GetUseUserStore.currentNetModulePrimaryId = res.data.id
     }
@@ -473,20 +473,16 @@ code {
   border-radius: 4px;
 }
 #showConnStatusMsg {
-  /*margin: 2rem;*/
-  /*display: flex;*/
-  text-align-all: center;
   text-align: center; /*让div内部文字居中*/
-  /*background-color: #fff;*/
-  border-radius: 20px;
-  width: 300px;
-  height: 350px;
-  margin: auto;
-  position: absolute;
-  /*top: 0;*/
+  border-radius: 1rem;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   left: 0;
   right: 0;
   bottom: 0;
+  z-index: -999;
 }
 .green {
   color: #00a508;
