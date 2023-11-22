@@ -62,9 +62,10 @@ if (GetUseUserStore.currentNetModuleId.length === 0) {
 }
 const net_list: NetModuleDetail[] = []
 /*Tips 提示语*/
-function showConnStatusMsg(wsRes: object) {
+function showConnStatusMsg(wsRes: any) {
   wsRes.message = '恭喜连接成功!!!'
   const span = document.getElementById('showConnStatusMsg')
+  console.log(GetDateStr + ' showConnStatusMsg ', wsRes)
   if (wsRes.success) {
     span.className = 'green'
   } else {
@@ -115,16 +116,18 @@ async function postNetModuleForm(values: NetForm) {
         //Tips
         setCache(GetNetModuleIdValue, net_list).then(async () => {
           const wsRes = await reconnect<{ success: boolean; message: string }>()
-          console.log('ws res: ', wsRes)
+          console.log(GetDateStr + ' ws res: ', wsRes)
+          wsRes.message = '恭喜连接成功!!!'
           showConnStatusMsg(wsRes)
+          if (wsRes.success) {
+            $toast.open({
+              message: '提交成功!',
+              type: 'success',
+              position: 'top',
+            })
+            tagType.value = 'success'
+          }
         })
-
-        $toast.open({
-          message: '提交成功!',
-          type: 'success',
-          position: 'top',
-        })
-        tagType.value = 'success'
       })
       .catch((err) => console.error(err))
 
@@ -230,10 +233,21 @@ function paddingDataForm(element: any, queryId: any) {
 }
 
 //新增
+let throttleBool = true //全局变量
 const onSubmit = (values: NetForm) => {
-  idValue.value = GetUseUserStore.currentNetModulePrimaryId
-  values.id = GetUseUserStore.currentNetModulePrimaryId
-  postNetModuleForm(values)
+  if (throttleBool) {
+    //第一次执行，之后五秒内不再执行
+    //此处写需要触发的函数\方法
+    idValue.value = GetUseUserStore.currentNetModulePrimaryId
+    values.id = GetUseUserStore.currentNetModulePrimaryId
+    postNetModuleForm(values)
+    throttleBool = false
+    setTimeout(() => {
+      throttleBool = true
+    }, 1000)
+  } else {
+    console.log('不执行')
+  }
 }
 
 const onFailed = (errorInfo: NetForm[]) => {
@@ -321,12 +335,7 @@ function onBlurInputPrefixBA() {
 <!--页面-->
 <template>
   <div id="app">
-    <van-nav-bar
-      title="网络模块配置"
-      left-text="返回"
-      left-arrow
-      @click-left="onClickLeft"
-    />
+    <van-nav-bar left-text="返回" left-arrow @click-left="onClickLeft" />
     <van-form @failed="onFailed" @submit="onSubmit">
       <van-nav-bar title="网络模块配置" @click-left="onClickLeft" />
       <van-cell-group inset>
