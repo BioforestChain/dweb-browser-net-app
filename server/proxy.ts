@@ -162,14 +162,14 @@ async function initProxy() {
   let wsState: boolean = false
   const netInfos = await get<NetInfo[] | undefined>(netConfigKey)
   if (!netInfos) {
-    return
+    return wsState
   }
 
   const netInfo = netInfos[0]
   if (!netInfo || !netInfo.domain || !netInfo.broadcast_address) {
     saveError('配置不正确')
     console.warn('需要配置网络模块')
-    return
+    return wsState
   }
 
   let url: string
@@ -187,7 +187,7 @@ async function initProxy() {
   } catch (err) {
     console.error('init ws err: ', err)
     saveError(`init ws err: ${err}`)
-    return
+    return wsState
   }
 
   wsState = true
@@ -243,19 +243,15 @@ export const rebuildCurrentWs = async () => {
     ws.close()
   }
 
-  let msg: string = 'connection successful'
-  if (!wsInstance.reason) {
-    msg = wsInstance.reason as string
-  }
-
   const wsState = await initProxy()
+
+  let msg: string = wsState ? 'connection successful' : 'connection failed'
   return { success: wsState, message: msg }
 }
 
 export const shutdownCurrentWs = async () => {
   if (wsInstance.is_finished) {
     const ws = await wsInstance.promise
-    console.log('wsInstance: ', wsInstance)
     ws.close()
   }
 
