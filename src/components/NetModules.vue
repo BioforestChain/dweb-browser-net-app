@@ -64,19 +64,20 @@ if (GetUseUserStore.currentNetModuleId.length === 0) {
 }
 const net_list: NetModuleDetail[] = []
 /*Tips 提示语*/
-function showConnStatusMsg(wsRes: any) {
-  const span = document.getElementById('showConnStatusMsg')
+function showConnStatusMsg(wsRes: { success: boolean; message: string }) {
+  showLoading(true)
+  const span = document.getElementById('showConnStatusMsg')!
   console.log(GetDateStr + ' showConnStatusMsg ', wsRes)
-  showLoading(false)
   if (wsRes.success) {
     span.className = 'green'
   } else {
     span.className = 'red'
   }
+  showLoading(false)
   span.innerText = wsRes.message
 }
 //回填
-getCache(GetNetModuleIdValue).then(async (existingValue) => {
+getCache(GetNetModuleIdValue).then(async (existingValue: any) => {
   console.log(GetDateStr + ' init existingValue: ', existingValue)
   if (existingValue[0].id > 0) {
     paddingDataForm(existingValue[0], existingValue[0].id)
@@ -108,16 +109,23 @@ async function postNetModuleForm(values: NetForm) {
         }
         //Tips
         setCache(GetNetModuleIdValue, net_list).then(async () => {
-          const wsRes = await reconnect()
+          const wsRes = await reconnect<{ success: boolean; message: string }>()
           console.log(GetDateStr.value + ' ws res: ', wsRes)
           showConnStatusMsg(wsRes)
           if (wsRes.success) {
             $toast.open({
-              message: '提交成功!',
+              message: '启动成功!',
               type: 'success',
               position: 'top',
             })
             tagType.value = 'success'
+          } else {
+            $toast.open({
+              message: '启动失败!',
+              type: 'error',
+              position: 'top',
+            })
+            tagType.value = 'danger'
           }
         })
       })
@@ -227,16 +235,15 @@ function paddingDataForm(element: any, queryId: any) {
 //新增
 let throttleBool = true //全局变量
 const onSubmit = (values: NetForm) => {
+  showLoading(true)
   if (throttleBool) {
-    //第一次执行，之后五秒内不再执行
+    //第一次执行，之后1秒内不再执行
     idValue.value = GetUseUserStore.currentNetModulePrimaryId
     values.id = GetUseUserStore.currentNetModulePrimaryId
     postNetModuleForm(values)
-    // const load = document.getElementById('loading')
-    // load.style.display = 'block'
-    showLoading(true)
     throttleBool = false
     setTimeout(() => {
+      showLoading(false)
       throttleBool = true
     }, 1000)
   } else {
@@ -264,7 +271,10 @@ const onConnectNet = () => {
     closeOnPopstate: true,
   })
     .then(async () => {
-      const shutdownRes = await shutdown()
+      const shutdownRes = await shutdown<{
+        success: boolean
+        message: string
+      }>()
       console.log(GetDateStr.value + ' shutdownRes', shutdownRes)
       $toast.open({
         message: '断开!',
@@ -299,7 +309,7 @@ const onConnectNet = () => {
 //   })
 
 function showLoading(display: boolean) {
-  const load = document.getElementById('loading')
+  const load = document.getElementById('loading')!
   display ? (load.style.display = 'block') : (load.style.display = 'none')
 }
 
@@ -309,10 +319,11 @@ function getSuffixDomain(hostname: string): string {
     const parts = hostname.split('.')
     suffixBroadcastAddressValue.value =
       '.' + parts[parts.length - 2] + '.' + parts[parts.length - 1]
-    const span = document.getElementById('mySpan')
+    const span = document.getElementById('mySpan')!
     span.innerText = suffixBroadcastAddressValue.value
     return suffixBroadcastAddressValue.value
   }
+  return ''
 }
 
 function onBlurInputPrefixBA() {
@@ -324,9 +335,13 @@ function onBlurInputPrefixBA() {
 <!--页面-->
 <template>
   <div id="app">
-    <van-nav-bar left-text="返回" left-arrow @click-left="onClickLeft" />
+    <van-nav-bar
+      title="网络模块配置"
+      left-text="返回"
+      left-arrow
+      @click-left="onClickLeft"
+    />
     <van-form @failed="onFailed" @submit="onSubmit">
-      <van-nav-bar title="网络模块配置" @click-left="onClickLeft" />
       <van-cell-group inset>
         <div class="van-tag--mini tag-div">
           <!-- <van-tag round type="success"> 连接 </van-tag>
@@ -390,14 +405,7 @@ function onBlurInputPrefixBA() {
           @blur="onBlurInputPrefixBA"
         >
           <template #button>
-            <span
-              id="mySpan"
-              size="small"
-              type="text"
-              readonly
-              disabled
-              @blur="suffixBroadcastAddressValue = $event.target.value"
-            />
+            <span id="mySpan" size="small" type="text" readonly disabled />
           </template>
         </van-field>
 
