@@ -13,11 +13,13 @@ import { useRoute } from 'vue-router'
 import { GetNetModuleIdValue, GetUseUserStore } from '@/types'
 import { GetDateStr, $toast } from '@/types'
 import { showConfirmDialog } from 'vant'
-// import { del, get, set } from 'idb-keyval'
+// import { del,
+//   get as getCache,
+//   set as setCache
+// } from 'idb-keyval'
 
 defineProps<{ msg: string }>()
 
-const checked = ref(false)
 const tagType = ref('warning')
 const useRouteObj = useRoute()
 
@@ -63,15 +65,12 @@ if (GetUseUserStore.currentNetModuleId.length === 0) {
 const net_list: NetModuleDetail[] = []
 /*Tips 提示语*/
 function showConnStatusMsg(wsRes: any) {
-  wsRes.message = '恭喜连接成功!!!'
   const span = document.getElementById('showConnStatusMsg')
   console.log(GetDateStr + ' showConnStatusMsg ', wsRes)
-  const load = document.getElementById('loading')
-  load.style.display = 'none'
+  showLoading(false)
   if (wsRes.success) {
     span.className = 'green'
   } else {
-    wsRes.message = '您已断开连接!!!'
     span.className = 'red'
   }
   span.innerText = wsRes.message
@@ -97,10 +96,6 @@ async function postNetModuleForm(values: NetForm) {
         if (existingValue === undefined || existingValue === null) {
           console.log(GetDateStr + ' post existingValue ', existingValue)
           net_list.push(res.data)
-          console.log(
-            GetDateStr.value + ' postNetModuleForm net_list1 ',
-            net_list,
-          )
         } else {
           const index = net_list.findIndex((item) => item.id == res.data.id)
           //遍历存在的 然后当下提交的是最新的，若有相同的id覆盖之
@@ -110,15 +105,11 @@ async function postNetModuleForm(values: NetForm) {
             //否则新增
             net_list.push(res.data)
           }
-          console.log(
-            GetDateStr.value + ' postNetModuleForm net_list2 ',
-            net_list,
-          )
         }
         //Tips
         setCache(GetNetModuleIdValue, net_list).then(async () => {
-          const wsRes = await reconnect<{ success: boolean; message: string }>()
-          console.log(GetDateStr + ' ws res: ', wsRes)
+          const wsRes = await reconnect()
+          console.log(GetDateStr.value + ' ws res: ', wsRes)
           showConnStatusMsg(wsRes)
           if (wsRes.success) {
             $toast.open({
@@ -236,13 +227,14 @@ function paddingDataForm(element: any, queryId: any) {
 //新增
 let throttleBool = true //全局变量
 const onSubmit = (values: NetForm) => {
-  const load = document.getElementById('loading')
-  load.style.display = 'block'
   if (throttleBool) {
     //第一次执行，之后五秒内不再执行
     idValue.value = GetUseUserStore.currentNetModulePrimaryId
     values.id = GetUseUserStore.currentNetModulePrimaryId
     postNetModuleForm(values)
+    // const load = document.getElementById('loading')
+    // load.style.display = 'block'
+    showLoading(true)
     throttleBool = false
     setTimeout(() => {
       throttleBool = true
@@ -264,8 +256,7 @@ const onFailed = (errorInfo: NetForm[]) => {
 //nav-bar
 const onClickLeft = () => history.back()
 
-const onConnectNet = (newValue: any) => {
-  console.log('btnOnConnectNet newV', newValue)
+const onConnectNet = () => {
   showConfirmDialog({
     title: '提醒',
     message: '是否断开连接？',
@@ -273,28 +264,18 @@ const onConnectNet = (newValue: any) => {
     closeOnPopstate: true,
   })
     .then(async () => {
-      await shutdown()
-      const load = document.getElementById('loading')
-      load.style.display = 'block'
+      const shutdownRes = await shutdown()
+      console.log(GetDateStr.value + ' shutdownRes', shutdownRes)
       $toast.open({
         message: '断开!',
         type: 'success',
         position: 'top',
       })
-
       // 判断connect状态
       tagType.value = 'danger'
       console.log('btnOnConnectNet on confirm')
-      const wsRes = {
-        success: false,
-        message: '',
-      }
-      showConnStatusMsg(wsRes)
-
-      if (newValue) {
-        console.log('btnOnConnectNet checked.value', checked.value)
-        checked.value = newValue
-      }
+      showLoading(true)
+      showConnStatusMsg(shutdownRes)
     })
     .catch(() => {
       //
@@ -303,7 +284,7 @@ const onConnectNet = (newValue: any) => {
         type: 'error',
         position: 'top',
       })
-
+      showLoading(false)
       // tagType.value = 'success'
       console.log('btnOnConnectNet on cancel')
     })
@@ -316,6 +297,11 @@ const onConnectNet = (newValue: any) => {
 //       id,
 //     },
 //   })
+
+function showLoading(display: boolean) {
+  const load = document.getElementById('loading')
+  display ? (load.style.display = 'block') : (load.style.display = 'none')
+}
 
 //suffixBroadcastAddressValue
 function getSuffixDomain(hostname: string): string {
@@ -499,6 +485,9 @@ label {
   right: 0;
   bottom: 0;
   justify-content: center;
+}
+#loading {
+  display: none;
 }
 
 code {
