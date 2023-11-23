@@ -85,6 +85,10 @@ export const apiAppModuleDel = (values: GetAppModuleId) => {
 import { ConfigPlugin } from '@plaoc/plugins'
 
 class IDB extends ConfigPlugin {
+  getApps<T>() {
+    return this.fetchApi('/apps', { method: 'GET' }).object<T>()
+  }
+
   reconnect<T>() {
     return this.fetchApi('/reconnection', { method: 'POST' }).object<T>()
   }
@@ -115,6 +119,10 @@ class IDB extends ConfigPlugin {
   }
 }
 const iDB = new IDB()
+
+export function getApps<T>(): Promise<T> {
+  return iDB.getApps<T>()
+}
 
 export function reconnect<T>(): Promise<T> {
   return iDB.reconnect<T>()

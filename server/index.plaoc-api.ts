@@ -1,5 +1,6 @@
 import { Router } from '@plaoc/server/middleware'
 import { get, set, del } from 'idb-keyval'
+import { jsProcess } from '@dweb-browser/js-process'
 import { rebuildCurrentWs, shutdownCurrentWs } from './proxy'
 import manifest from '../manifest.json'
 
@@ -60,6 +61,14 @@ app.use(async (event) => {
   if (event.pathname == `${prefixpath}/reconnection` && event.method == 'PUT') {
     const result = await shutdownCurrentWs()
     return Response.json(result)
+  }
+
+  // 获取当前设备安装模块
+  if (event.pathname == `${prefixpath}/apps` && event.method == 'GET') {
+    const apps = await jsProcess.nativeFetch(
+      'file://dns.std.dweb/search?category=application',
+    )
+    return Response.json(await apps.json())
   }
 
   return Response.json({ success: true, message: 'api server ok' })
