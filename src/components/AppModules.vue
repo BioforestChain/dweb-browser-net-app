@@ -1,30 +1,42 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import type { AppForm, AppModuleDetail } from '@/types'
+import type { AppForm, AppModuleDetail, AppModuleInfo } from '@/types'
 import { apiAppModuleReg } from '@/api/user'
 import router from '@/router'
 import {
   GetNetModuleIdFromCfg,
   GetAppModuleIdValue,
+  GetNetModuleIdValue,
   GetUseUserStore,
 } from '@/types'
 import { GetDateStr, $toast } from '@/types'
-import { del, get, set } from 'idb-keyval'
+// import { del as delCache, get as getCache, set as setCache } from 'idb-keyval'
 
+import { getApps, setCache, getCache, delCache } from '@/api/user'
+
+const addTmpAppIdNameList: AppModuleInfo[] = []
+
+getApps().then((items) => {
+  const span = document.getElementById('mySpan')!
+  span.innerText = JSON.stringify(items)
+
+  items.forEach((item) => {
+    if (item.mmid && item.mmid != GetNetModuleIdValue) {
+      console.log('item.mmid: ', item.mmid)
+      console.log('item.name: ', item.name)
+      item.appId = item.mmid
+      item.appName = item.name
+      console.log('item: ', item)
+      addTmpAppIdNameList.push(item)
+    }
+  })
+})
+console.log(GetDateStr.value + ' addTmpAppIdNameList: ', addTmpAppIdNameList)
 defineProps<{ msg: string }>()
 const idValue = ref(0)
 
 const userNameValue = GetUseUserStore.currentNetModuleDomain
 
-const addTmpAppIdNameList: any = [
-  { appId: 'helloworld123', appName: '123.bagen.com' },
-  { appId: 'helloworld456', appName: '456.bagen.com' },
-  { appId: 'helloworld789', appName: '789.bagen.com' },
-  { appId: 'helloworld001', appName: '001.bagen.com' },
-  { appId: 'helloworld002', appName: '002.bagen.com' },
-  { appId: 'helloworld003', appName: '003.bagen.com' },
-  { appId: 'helloworld005', appName: '005.bagen.com' },
-]
 // 匹配根域名正则
 const netIdValueFormatter = (value: string) => {
   if (/[^a-z.\d]/i.test(value)) {
@@ -41,9 +53,9 @@ async function postAppModuleForm(values: AppForm['arrayAppIdInfo']) {
   })
   if (res.code == 0 && res.data.id > 0) {
     console.log('GetAppModuleIdValue', GetAppModuleIdValue)
-    get(GetAppModuleIdValue).then((existingValue) => {
+    getCache(GetAppModuleIdValue).then((existingValue) => {
       if (existingValue === undefined || existingValue === null) {
-        del(GetAppModuleIdValue)
+        delCache(GetAppModuleIdValue)
       } else {
         app_list = existingValue
         const index = app_list.findIndex((item) => item.id == res.data.id)
@@ -55,7 +67,7 @@ async function postAppModuleForm(values: AppForm['arrayAppIdInfo']) {
           app_list.push(res.data)
         }
         console.log(GetDateStr.value + 'postAppModuleForm app_list', app_list)
-        set(GetAppModuleIdValue, app_list)
+        setCache(GetAppModuleIdValue, app_list)
       }
     })
 
@@ -83,7 +95,7 @@ async function postAppModuleForm(values: AppForm['arrayAppIdInfo']) {
 }
 //新增
 const onSubmit = (values: AppForm[]) => {
-  values = arrLastChoosedCont.value
+  values = arrLastChosenCont.value
   console.log('postAppModuleForm values', values)
   postAppModuleForm(values)
 }
@@ -107,28 +119,27 @@ const showPopup = () => {
 
 // 选中处理
 const appIdNameCheckResult: any = ref({})
-const arrLastChoosedIdx: any = []
-const arrLastChoosedCont: any = []
+const arrLastChosenIdx: any = []
+const arrLastChosenCont: any = []
 function onClickSelected() {
-  arrLastChoosedIdx.value = []
-  arrLastChoosedCont.value = []
-  console.log('appIdNameCheckResult.value', appIdNameCheckResult.value)
+  arrLastChosenIdx.value = []
+  arrLastChosenCont.value = []
   Object.keys(appIdNameCheckResult.value).forEach((key) => {
     //模拟选中的时候数据中的第几项
     if (appIdNameCheckResult.value[key].length > 0) {
       const index: any = appIdNameCheckResult.value[key][0]
       if (index >= 0) {
-        arrLastChoosedIdx.value.push(parseInt(index))
+        arrLastChosenIdx.value.push(parseInt(index))
       }
     }
   })
-  console.log('arrLastChoosedIdx', arrLastChoosedIdx)
-  arrLastChoosedIdx.value.forEach((item: number) => {
-    addTmpAppIdNameList[item]['netId'] = GetAppModuleIdValue
+  console.log('arrLastChosenIdx', arrLastChosenIdx)
+  arrLastChosenIdx.value.forEach((item: number) => {
+    addTmpAppIdNameList[item]['netId'] = GetNetModuleIdValue
     addTmpAppIdNameList[item]['userName'] = userNameValue
-    arrLastChoosedCont.value.push(addTmpAppIdNameList[item])
+    arrLastChosenCont.value.push(addTmpAppIdNameList[item])
   })
-  console.log('arrLastChoosedCont', arrLastChoosedCont)
+  console.log('arrLastChosenCont', arrLastChosenCont)
 }
 </script>
 
@@ -213,6 +224,7 @@ function onClickSelected() {
           提交配置
         </van-button>
       </div>
+      <span id="mySpan" />
     </van-form>
   </div>
 </template>
@@ -260,11 +272,14 @@ code {
   padding: 1rem;
 }
 .menu {
-  padding-left: rem;
+  padding-left: 1rem;
   padding: 0.3rem;
 }
 .checkbox-app {
   padding: 0.1rem;
+  display: flex;
+  font-size: smaller;
+  width: 23rem;
 }
 .checkbox-app span {
   margin-left: 1rem;

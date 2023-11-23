@@ -1,4 +1,6 @@
-export const GetAppModuleIdValue = 'appModuleList'
+import { GetNetModuleIdValue } from './netform'
+
+export const GetAppModuleIdValue = GetNetModuleIdValue + '_appModuleList'
 export interface GetAppModuleList {
   // length: number
   list: AppModuleDetail[]
@@ -21,6 +23,13 @@ export interface GetAppModuleData {
 export interface GetAppModuleId {
   id: number
 }
+
+export interface AppModuleInfo {
+  mmid: string
+  name: string
+  icons: string
+}
+
 export interface AppModuleDetail {
   id: number
   app_id: string
