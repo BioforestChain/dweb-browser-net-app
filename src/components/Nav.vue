@@ -10,11 +10,6 @@ const targetAppModule = () => {
     name: 'app-module-list',
   })
 }
-
-import { getApps } from '@/api/user'
-getApps().then((res) => {
-  console.log('getApps: ', res)
-})
 </script>
 
 <!--页面-->
