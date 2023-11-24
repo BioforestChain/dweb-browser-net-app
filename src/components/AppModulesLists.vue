@@ -4,10 +4,9 @@ import { apiAppModuleList, apiAppModuleDel } from '@/api/user'
 import type { AppModuleDetail, GetAppModuleId } from '@/types'
 import { GetAppModuleIdValue, GetDateStr, $toast } from '@/types'
 import router from '@/router'
-import { get, set, del } from 'idb-keyval'
-
+// import { get, set, del } from 'idb-keyval'
+import { setCache, getCache, delCache } from '@/api/user'
 defineProps<{ msg: string }>()
-
 const selectedIndex = ref(-1)
 const appModuleList = ref<AppModuleDetail[]>([])
 const loading = ref(false)
@@ -57,8 +56,8 @@ async function getModuleList() {
     finished.value = true // 停止加载
   }
   if (res.code == 0 && res.data.list != null) {
-    get(GetAppModuleIdValue).then((existingValue) => {
-      if (existingValue != null) {
+    getCache(GetAppModuleIdValue).then((existingValue) => {
+      if (existingValue.success) {
         // 解析成数组
         const cleanedData = removeDuplicates(existingValue)
         // 1. 提取id
@@ -77,7 +76,7 @@ async function getModuleList() {
         }
         loading.value = false
         console.log(GetDateStr.value + ' app_list1', app_list)
-        set(GetAppModuleIdValue, app_list)
+        setCache(GetAppModuleIdValue, app_list)
         $toast.open({
           message: '已全部加载完!',
           type: 'success',
@@ -86,16 +85,19 @@ async function getModuleList() {
         if (appModuleList.value.length >= total) {
           finished.value = true
         }
-      } else if (
-        existingValue === undefined ||
-        existingValue === null ||
-        existingValue === '[]'
-      ) {
-        del(GetAppModuleIdValue)
-        app_list.push(...res.data.list)
-        console.log(GetDateStr.value + ' app_list2', app_list)
-        set(GetAppModuleIdValue, app_list)
-        appModuleList.value.push(...res.data.list)
+      } else {
+        delCache(GetAppModuleIdValue).then((existingValue) => {
+          if (existingValue.success) {
+            app_list.push(...res.data.list)
+            setCache(GetAppModuleIdValue, app_list).then((existingValue) => {
+              console.log(
+                GetDateStr.value + ' getModuleList  setCache existingValue: ',
+                existingValue,
+              )
+            })
+            appModuleList.value.push(...res.data.list)
+          }
+        })
       }
     })
   }
@@ -138,31 +140,42 @@ function handleAdd() {
   })
 }
 
-async function delAppById(values: GetAppModuleId['id']) {
+async function delAppById(values: GetAppModuleId['id']): Promise<boolean> {
   const res = await apiAppModuleDel({
     id: values,
   })
   if (res.code == 0) {
-    get(GetAppModuleIdValue).then((existingValue) => {
-      if (existingValue != null) {
+    getCache(GetAppModuleIdValue).then((existingValue) => {
+      if (existingValue.success) {
         const data: any = existingValue
         const newItems = data.filter(
           (item: { id: number }) => item.id !== values,
         )
-        set(GetAppModuleIdValue, newItems.value)
+        console.log(GetDateStr.value + ' newItems: ', newItems)
+        delCache(GetAppModuleIdValue).then((existingValue) => {
+          console.log(
+            GetDateStr.value + ' delAppById delCache existingValue1: ',
+            existingValue,
+          )
+          setCache(GetAppModuleIdValue, newItems.value)
+        })
       } else {
-        del(GetAppModuleIdValue)
-        // clear()
+        delCache(GetAppModuleIdValue).then((existingValue) => {
+          console.log(
+            GetDateStr.value + ' delAppById delCache existingValue2: ',
+            existingValue,
+          )
+        })
         onRefresh()
       }
     })
+    return true
   }
 }
 
 function handleDel(id: number) {
-  delAppById(id)
-  // window.location.reload()
-  router.go(0)
+  const res = delAppById(id)
+  console.log(GetDateStr.value + ' handleDel res ', res)
 }
 
 function onClickSelected() {
@@ -216,11 +229,10 @@ const onClickLeft = () => history.back()
 .van-cell__title {
   font-size: 0.15rem;
   overflow: hidden;
-  text-overflow: ellip/sis;
-  /* white-space: nowrap; */
+  text-overflow: ellipsis;
 }
 .van-cell__title span {
-  white-space: pre-wr;
+  white-space: pre-wrap;
   word-break: break-all;
 }
 .red-text {
