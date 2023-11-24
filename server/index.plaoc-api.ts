@@ -2,9 +2,6 @@ import { Router } from '@plaoc/server/middleware'
 import { get, set, del } from 'idb-keyval'
 import { jsProcess } from '@dweb-browser/js-process'
 import { rebuildCurrentWs, shutdownCurrentWs } from './proxy'
-import manifest from '../manifest.json'
-
-// rebuildCurrentWs()
 
 const app = new Router()
 
@@ -30,7 +27,13 @@ app.use(async (event) => {
     try {
       const data = await event.json()
       console.log('data: ', data)
-      await set(manifest.id, data[manifest.id])
+
+      const keys = Object.keys(data)
+      if (keys.length != 1) {
+        throw new Error('只能传一个json key')
+      }
+
+      await set(keys[0], data[keys[0]])
       return Response.json({ success: true, message: 'ok' })
     } catch (error) {
       return Response.json({ success: false, message: error })

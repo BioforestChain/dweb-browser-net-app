@@ -199,7 +199,25 @@ async function initProxy() {
       console.log('forward url: ', url, event, netInfo)
 
       if (url.hostname !== netInfo.broadcast_address) {
-        return Response.json({ success: false, message: 'invalid request' })
+        // return Response.json({ success: false, message: 'invalid request' })
+        return IpcResponse.fromJson(
+          event.req_id,
+          400,
+          undefined,
+          { success: false, message: 'invalid request' },
+          ipc,
+        )
+      }
+
+      if (!(await haveApp(netConfigKey))) {
+        // return Response.json({ success: false, message: 'invalid request' })
+        return IpcResponse.fromJson(
+          event.req_id,
+          404,
+          undefined,
+          { success: false, message: 'Not Found' },
+          ipc,
+        )
       }
 
       // forwarding reqeusts
@@ -271,4 +289,15 @@ async function saveError(err: any) {
 
     return v
   })
+}
+
+async function haveApp(mmid: string): Promise<boolean> {
+  const apps = await get<{ net_id: string }[]>(`${mmid}_appModuleList`)
+  if (!apps) return false
+
+  for (const app of apps) {
+    if (app.app_id === mmid) return true
+  }
+
+  return false
 }
