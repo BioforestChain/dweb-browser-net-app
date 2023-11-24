@@ -213,7 +213,7 @@ const onClickLeft = () => history.back()
           class="van-cell__title"
           @click="onClickSelected"
         >
-          <span :class="className1">{{ item.net_id }} &nbsp;&nbsp;</span>
+          <span :class="className1">{{ item.app_id }} &nbsp;&nbsp;</span>
           <span :class="className2">{{ item.user_name }}</span>
           <span :class="className3" />&nbsp;
           <van-button size="small" type="danger" @click="handleDel(item.id)">
@@ -234,6 +234,7 @@ const onClickLeft = () => history.back()
 .van-cell__title span {
   white-space: pre-wrap;
   word-break: break-all;
+  font-size: smaller;
 }
 .red-text {
   color: red;
