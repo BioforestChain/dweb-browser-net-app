@@ -209,7 +209,11 @@ async function initProxy() {
         )
       }
 
-      if (!(await haveApp(netConfigKey))) {
+      // forwarding reqeusts
+      const mmid = event.headers.get('X-Dweb-Host') as string
+
+      console.log('forward request: ', url, mmid)
+      if (!(await haveApp(netConfigKey, mmid))) {
         // return Response.json({ success: false, message: 'invalid request' })
         return IpcResponse.fromJson(
           event.req_id,
@@ -219,11 +223,6 @@ async function initProxy() {
           ipc,
         )
       }
-
-      // forwarding reqeusts
-      const mmid = event.headers.get('X-Dweb-Host') as string
-
-      console.log('forward request: ', url, mmid)
 
       // const u = 'http://external.testmodule.bagen.com.dweb:443/test?client_id=test.bn.com'
       const u = `http://external.${mmid}:443${event.pathname}${event.search}`
@@ -291,12 +290,12 @@ async function saveError(err: any) {
   })
 }
 
-async function haveApp(mmid: string): Promise<boolean> {
-  const apps = await get<{ net_id: string }[]>(`${mmid}_appModuleList`)
+async function haveApp(mmid: string, dstMmid: string): Promise<boolean> {
+  const apps = await get<{ app_id: string }[]>(`${mmid}_appModuleList`)
   if (!apps) return false
 
   for (const app of apps) {
-    if (app.app_id === mmid) return true
+    if (app.app_id === dstMmid) return true
   }
 
   return false
