@@ -55,40 +55,49 @@ async function getModuleList() {
     appModuleList.value = [] // 清空数组
     finished.value = true // 停止加载
   }
-  if (res.code == 0 && res.data.list != null) {
-    getCache(GetAppModuleIdValue).then((existingValue) => {
-      if (existingValue.success) {
-        // 解析成数组
-        const cleanedData = removeDuplicates(existingValue)
-        // 1. 提取id
-        const ids = cleanedData.map((item: any) => item.id)
-        // 2. 去重
-        const uniqueIds = [...new Set(ids)]
-        // 3. 获取数量
-        const count = uniqueIds.length
-        total = res.data.total
-        if (total == count) {
-          appModuleList.value.push(...cleanedData)
-          app_list.push(...cleanedData)
-        } else if (total < count) {
-          appModuleList.value.push(...res.data.list)
-          app_list.push(...res.data.list)
-        }
-        loading.value = false
-        console.log(GetDateStr.value + ' app_list1', app_list)
-        setCache(GetAppModuleIdValue, app_list)
-        $toast.open({
-          message: '已全部加载完!',
-          type: 'success',
-          position: 'top',
-        })
-        if (appModuleList.value.length >= total) {
-          finished.value = true
-        }
-      } else {
-        delCache(GetAppModuleIdValue).then((existingValue) => {
+  getCache(GetAppModuleIdValue).then((existingValue: any) => {
+    console.log('app mod list existValue:', existingValue)
+    if (existingValue.length > 0 && existingValue.success !== false) {
+      // 解析成数组
+      const cleanedData = removeDuplicates(existingValue)
+      // 1. 提取id
+      const ids = cleanedData.map((item: any) => item.id)
+      // 2. 去重
+      const uniqueIds = [...new Set(ids)]
+      // 3. 获取数量
+      const count = uniqueIds.length
+      total = res.data.total
+      if (total == count) {
+        appModuleList.value.push(...cleanedData)
+        app_list.push(...cleanedData)
+      } else if (total < count) {
+        appModuleList.value.push(...res.data.list)
+        app_list.push(...res.data.list)
+      }
+      loading.value = false
+      console.log(GetDateStr.value + ' app_list1', app_list)
+      setCache(GetAppModuleIdValue, app_list)
+      $toast.open({
+        message: '已全部加载完!',
+        type: 'success',
+        position: 'top',
+      })
+      if (appModuleList.value.length >= total) {
+        finished.value = true
+      }
+    } else {
+      if (res.code == 0 && res.data.list != null) {
+        delCache(GetAppModuleIdValue).then((existingValue: any) => {
+          console.log(
+            GetDateStr.value + ' getModuleList  delCache existingValue ',
+            existingValue,
+          )
           if (existingValue.success) {
             app_list.push(...res.data.list)
+            console.log(
+              GetDateStr.value + ' getModuleList  delCache app_list: ',
+              app_list,
+            )
             setCache(GetAppModuleIdValue, app_list).then((existingValue) => {
               console.log(
                 GetDateStr.value + ' getModuleList  setCache existingValue: ',
@@ -99,8 +108,8 @@ async function getModuleList() {
           }
         })
       }
-    })
-  }
+    }
+  })
 
   // const existingValue = localStorage.getItem(GetAppModuleIdValue)
 }
@@ -145,7 +154,7 @@ async function delAppById(values: GetAppModuleId['id']): Promise<boolean> {
     id: values,
   })
   if (res.code == 0) {
-    getCache(GetAppModuleIdValue).then((existingValue) => {
+    getCache(GetAppModuleIdValue).then((existingValue: any) => {
       if (existingValue.success) {
         const data: any = existingValue
         const newItems = data.filter(

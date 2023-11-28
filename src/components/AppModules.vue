@@ -22,8 +22,6 @@ getApps().then((items) => {
 
   items.forEach((item) => {
     if (item.mmid && item.mmid != GetNetModuleIdValue) {
-      console.log('item.mmid: ', item.mmid)
-      console.log('item.name: ', item.name)
       item.appId = item.mmid
       item.appName = item.name
       console.log('item: ', item)
@@ -125,7 +123,7 @@ function onClickSelected() {
   arrLastChosenIdx.value = []
   arrLastChosenCont.value = []
   Object.keys(appIdNameCheckResult.value).forEach((key) => {
-    //模拟选中的时候数据中的第几项
+    //选中的时候,数据中的第几项
     if (appIdNameCheckResult.value[key].length > 0) {
       const index: any = appIdNameCheckResult.value[key][0]
       if (index >= 0) {
