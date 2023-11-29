@@ -180,6 +180,7 @@ async function delAppById(values: GetAppModuleId['id']): Promise<boolean> {
     })
     return true
   }
+  return false
 }
 
 function handleDel(id: number) {
