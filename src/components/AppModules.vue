@@ -16,11 +16,11 @@ import { getApps, setCache, getCache, delCache } from '@/api/user'
 
 const addTmpAppIdNameList: AppModuleInfo[] = []
 
-getApps().then((items) => {
-  const span = document.getElementById('mySpan')!
-  span.innerText = JSON.stringify(items)
+getApps().then((items: any) => {
+  // const span = document.getElementById('mySpan')!
+  // span.innerText = JSON.stringify(items)
 
-  items.forEach((item) => {
+  items.forEach((item: any) => {
     if (item.mmid && item.mmid != GetNetModuleIdValue) {
       item.appId = item.mmid
       item.appName = item.name
@@ -51,7 +51,7 @@ async function postAppModuleForm(values: AppForm['arrayAppIdInfo']) {
   })
   if (res.code == 0 && res.data.id > 0) {
     console.log('GetAppModuleIdValue', GetAppModuleIdValue)
-    getCache(GetAppModuleIdValue).then((existingValue) => {
+    getCache(GetAppModuleIdValue).then((existingValue: any) => {
       if (existingValue === undefined || existingValue === null) {
         delCache(GetAppModuleIdValue)
       } else {
