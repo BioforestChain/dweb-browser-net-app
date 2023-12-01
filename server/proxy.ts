@@ -17,6 +17,8 @@ import {
   simpleEncoder,
   IpcResponse,
   IpcHeaders,
+  $MMID,
+  FetchEvent,
 } from '@dweb-browser/js-process'
 import manifest from '../manifest.json'
 
@@ -25,7 +27,7 @@ let wsInstance: PromiseOut<Websocket> = new PromiseOut()
 function createWs(
   url: string,
   reconnectDuration: number = 3000,
-  maxRetries: number | undefined = 20,
+  maxRetries: number | undefined,
 ): Websocket {
   console.log('ws url: ', url)
   const ws = new WebsocketBuilder(url)
@@ -42,7 +44,7 @@ function createWs(
   return ws
 }
 
-function initWs(url: string) {
+function initWs(url: string, mmid: $MMID) {
   // 每3s无限重连
   const ws = createWs(url, 3000, undefined)
 
@@ -51,8 +53,8 @@ function initWs(url: string) {
   const onOpen = (w: Websocket, event: Event) => {
     const serverIPC = new ReadableStreamIpc(
       {
-        mmid: '.dweb', // TODO 从manifest获取net模块id？
-        name: '.dweb', // TODO
+        mmid: mmid, // TODO 从manifest获取net模块id？
+        name: mmid, // TODO
         ipc_support_protocols: { cbor: false, protobuf: false, raw: false },
         dweb_deeplinks: [],
         categories: [],
@@ -158,123 +160,6 @@ interface NetInfo {
 
 const netConfigKey = manifest.id
 
-async function initProxy() {
-  let wsState: boolean = false
-  const netInfos = await get<NetInfo[] | undefined>(netConfigKey)
-  if (!netInfos) {
-    return wsState
-  }
-
-  const netInfo = netInfos[0]
-  if (!netInfo || !netInfo.domain || !netInfo.broadcast_address) {
-    saveError('配置不正确')
-    console.warn('需要配置网络模块')
-    return wsState
-  }
-
-  let url: string
-  // TODO for test
-  if (netInfo.broadcast_address == 'c.b.com') {
-    url = `ws://127.0.0.1:${netInfo.port}/proxy/ws?secret=${netInfo.secret}&client_id=${netInfo.broadcast_address}&domain=${netInfo.broadcast_address}`
-  } else {
-    url = `ws://${netInfo.domain}:${netInfo.port}/proxy/ws?secret=${netInfo.secret}&client_id=${netInfo.broadcast_address}&domain=${netInfo.broadcast_address}`
-  }
-
-  // const url = 'ws://127.0.0.1:8000/proxy/ws?secret=111&client_id=test.bn.com&domain=test.bn.com'
-  let ipc: $ReadableStreamIpc
-  try {
-    ipc = await initWs(url)
-  } catch (err) {
-    console.error('init ws err: ', err)
-    saveError(`init ws err: ${err}`)
-    return wsState
-  }
-
-  wsState = true
-
-  ipc
-    .onFetch(async (event) => {
-      const url = new URL(event.request.url)
-
-      console.log('forward url: ', url, event, netInfo)
-
-      if (url.hostname !== netInfo.broadcast_address) {
-        // return Response.json({ success: false, message: 'invalid request' })
-        return IpcResponse.fromJson(
-          event.req_id,
-          400,
-          undefined,
-          { success: false, message: 'invalid request' },
-          ipc,
-        )
-      }
-
-      // forwarding reqeusts
-      const mmid = event.headers.get('X-Dweb-Host') as string
-
-      console.log('forward request: ', url, mmid)
-      if (!(await haveApp(netConfigKey, mmid))) {
-        // return Response.json({ success: false, message: 'invalid request' })
-        return IpcResponse.fromJson(
-          event.req_id,
-          404,
-          undefined,
-          { success: false, message: 'Not Found' },
-          ipc,
-        )
-      }
-
-      // const u = 'http://external.testmodule.bagen.com.dweb:443/test?client_id=test.bn.com'
-      const u = `http://external.${mmid}:443${event.pathname}${event.search}`
-
-      try {
-        const resp = await jsProcess.nativeFetch(u, {
-          method: event.method,
-          headers: event.headers,
-          body: event.body,
-        })
-
-        console.log('forward response: ', resp.status)
-        return resp
-      } catch (error) {
-        saveError(`forward reqeust: ${error}`)
-        const headers = new IpcHeaders({ 'Content-Type': 'application/json' })
-        return IpcResponse.fromJson(
-          event.req_id,
-          400,
-          headers,
-          { success: false, message: error },
-          ipc,
-        )
-      }
-    })
-    .forbidden()
-    .cors()
-
-  return wsState
-}
-
-export const rebuildCurrentWs = async () => {
-  if (wsInstance.is_finished) {
-    const ws = await wsInstance.promise
-    ws.close()
-  }
-
-  const wsState = await initProxy()
-
-  let msg: string = wsState ? 'connection successful' : 'connection failed'
-  return { success: wsState, message: msg }
-}
-
-export const shutdownCurrentWs = async () => {
-  if (wsInstance.is_finished) {
-    const ws = await wsInstance.promise
-    ws.close()
-  }
-
-  return { success: true, message: '已关闭' }
-}
-
 const ErrKey = 'errors'
 
 async function saveError(err: any) {
@@ -299,4 +184,147 @@ async function haveApp(mmid: string, dstMmid: string): Promise<boolean> {
   }
 
   return false
+}
+
+export default class Proxy {
+  constructor() {}
+
+  static #ipc: PromiseOut<$ReadableStreamIpc>
+
+  static ipc() {
+    return Proxy.#ipc.promise
+  }
+
+  private static async start() {
+    let wsState: boolean = false
+    const netInfos = await get<NetInfo[] | undefined>(netConfigKey)
+    if (!netInfos) {
+      return wsState
+    }
+
+    const netInfo = netInfos[0]
+    if (!netInfo || !netInfo.domain || !netInfo.broadcast_address) {
+      saveError('配置不正确')
+      console.warn('需要配置网络模块')
+      return wsState
+    }
+
+    let url: string
+    // TODO for test
+    if (netInfo.broadcast_address == 'c.b.com') {
+      url = `ws://127.0.0.1:${netInfo.port}/proxy/ws?secret=${netInfo.secret}&client_id=${netInfo.broadcast_address}&domain=${netInfo.broadcast_address}`
+    } else {
+      url = `ws://${netInfo.domain}:${netInfo.port}/proxy/ws?secret=${netInfo.secret}&client_id=${netInfo.broadcast_address}&domain=${netInfo.broadcast_address}`
+    }
+
+    // const url = 'ws://127.0.0.1:8000/proxy/ws?secret=111&client_id=test.bn.com&domain=test.bn.com'
+    let ipc: $ReadableStreamIpc
+    try {
+      ipc = await initWs(url, netConfigKey as $MMID)
+      Proxy.#ipc.resolve(ipc)
+    } catch (err) {
+      Proxy.#ipc.reject(err)
+      console.error('init ws err: ', err)
+      saveError(`init ws err: ${err}`)
+      return wsState
+    }
+
+    wsState = true
+
+    ipc
+      .onFetch(async (event) => {
+        return await Proxy.forward(event, netInfo, ipc)
+      })
+      .forbidden()
+      .cors()
+
+    return wsState
+  }
+
+  private static async forward(
+    event: FetchEvent,
+    netInfo: NetInfo,
+    ipc: $ReadableStreamIpc,
+  ) {
+    const url = new URL(event.request.url)
+
+    console.log('forward url: ', url, event, netInfo)
+
+    if (url.hostname !== netInfo?.broadcast_address) {
+      return IpcResponse.fromJson(
+        event.req_id,
+        400,
+        undefined,
+        { success: false, message: 'invalid request' },
+        ipc,
+      )
+    }
+
+    // forwarding reqeusts
+    const mmid = event.headers.get('X-Dweb-Host') as string
+
+    console.log('forward request: ', url, mmid)
+    if (!(await haveApp(netConfigKey, mmid))) {
+      return IpcResponse.fromJson(
+        event.req_id,
+        404,
+        undefined,
+        { success: false, message: 'Not Found' },
+        ipc,
+      )
+    }
+
+    // const u = 'http://external.testmodule.bagen.com.dweb:443/test?client_id=test.bn.com'
+    const u = `http://external.${mmid}:443${event.pathname}${event.search}`
+
+    try {
+      const resp = await jsProcess.nativeFetch(u, {
+        method: event.method,
+        headers: event.headers,
+        body: event.body,
+      })
+
+      console.log('forward response: ', resp.status)
+      return resp
+    } catch (error) {
+      saveError(`forward reqeust: ${error}`)
+      const headers = new IpcHeaders({ 'Content-Type': 'application/json' })
+      return IpcResponse.fromJson(
+        event.req_id,
+        400,
+        headers,
+        { success: false, message: error },
+        ipc,
+      )
+    }
+  }
+
+  static async restart() {
+    await Proxy.close()
+
+    Proxy.#ipc = new PromiseOut<$ReadableStreamIpc>()
+
+    let result = false
+    try {
+      result = await Proxy.start()
+    } catch (error) {
+      console.error('restart ipc: ', error)
+    }
+
+    let msg: string = result ? 'connection successful' : 'connection failed'
+    return { success: result, message: msg }
+  }
+
+  static async shutdown() {
+    await Proxy.close()
+
+    return { success: true, message: '已关闭' }
+  }
+
+  private static async close() {
+    if (wsInstance.is_finished) {
+      const ws = await wsInstance.promise
+      ws.close()
+    }
+  }
 }
