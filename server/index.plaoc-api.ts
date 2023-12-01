@@ -1,7 +1,7 @@
 import { Router } from '@plaoc/server/middleware'
 import { get, set, del } from 'idb-keyval'
 import { jsProcess } from '@dweb-browser/js-process'
-import { rebuildCurrentWs, shutdownCurrentWs } from './proxy'
+import Proxy from './proxy'
 
 const app = new Router()
 
@@ -56,13 +56,13 @@ app.use(async (event) => {
     event.pathname == `${prefixpath}/reconnection` &&
     event.method == 'POST'
   ) {
-    const result = await rebuildCurrentWs()
+    const result = await Proxy.restart()
     return Response.json(result)
   }
 
   // 断开websocket连接
   if (event.pathname == `${prefixpath}/reconnection` && event.method == 'PUT') {
-    const result = await shutdownCurrentWs()
+    const result = await Proxy.shutdown()
     return Response.json(result)
   }
 
