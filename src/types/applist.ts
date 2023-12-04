@@ -28,6 +28,10 @@ export interface AppModuleInfo {
   mmid: string
   name: string
   icons: string
+  netId: string
+  userName: string
+  appId: string
+  appName: string
 }
 
 export interface AppModuleDetail {

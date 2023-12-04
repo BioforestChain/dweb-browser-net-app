@@ -16,14 +16,12 @@ import { getApps, setCache, getCache, delCache } from '@/api/user'
 
 const addTmpAppIdNameList: AppModuleInfo[] = []
 
-getApps().then((items) => {
-  const span = document.getElementById('mySpan')!
-  span.innerText = JSON.stringify(items)
+getApps().then((items: any) => {
+  // const span = document.getElementById('mySpan')!
+  // span.innerText = JSON.stringify(items)
 
-  items.forEach((item) => {
+  items.forEach((item: any) => {
     if (item.mmid && item.mmid != GetNetModuleIdValue) {
-      console.log('item.mmid: ', item.mmid)
-      console.log('item.name: ', item.name)
       item.appId = item.mmid
       item.appName = item.name
       console.log('item: ', item)
@@ -53,7 +51,7 @@ async function postAppModuleForm(values: AppForm['arrayAppIdInfo']) {
   })
   if (res.code == 0 && res.data.id > 0) {
     console.log('GetAppModuleIdValue', GetAppModuleIdValue)
-    getCache(GetAppModuleIdValue).then((existingValue) => {
+    getCache(GetAppModuleIdValue).then((existingValue: any) => {
       if (existingValue === undefined || existingValue === null) {
         delCache(GetAppModuleIdValue)
       } else {
@@ -125,7 +123,7 @@ function onClickSelected() {
   arrLastChosenIdx.value = []
   arrLastChosenCont.value = []
   Object.keys(appIdNameCheckResult.value).forEach((key) => {
-    //模拟选中的时候数据中的第几项
+    //选中的时候,数据中的第几项
     if (appIdNameCheckResult.value[key].length > 0) {
       const index: any = appIdNameCheckResult.value[key][0]
       if (index >= 0) {
