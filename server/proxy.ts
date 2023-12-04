@@ -189,9 +189,9 @@ async function haveApp(mmid: string, dstMmid: string): Promise<boolean> {
 export default class Proxy {
   constructor() {}
 
-  static #ipc: PromiseOut<$ReadableStreamIpc>
+  static #ipc: PromiseOut<$ReadableStreamIpc> = new PromiseOut()
 
-  static ipc() {
+  static getIpc() {
     return Proxy.#ipc.promise
   }
 

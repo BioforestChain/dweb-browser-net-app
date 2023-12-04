@@ -15,7 +15,7 @@ const routes: RouteRecordRaw[] = [
     name: 'index',
     component: () => import('@/components/Nav.vue'),
     meta: {
-      title: 'Nav',
+      title: '网络应用',
     },
   },
   {
@@ -23,7 +23,7 @@ const routes: RouteRecordRaw[] = [
     name: 'net-module-reg',
     component: () => import('@/components/NetModules.vue'),
     meta: {
-      title: 'NetModules',
+      title: '网络配置',
     },
   },
   /**
@@ -46,7 +46,7 @@ const routes: RouteRecordRaw[] = [
     name: 'app-module-reg',
     component: () => import('@/components/AppModules.vue'),
     meta: {
-      title: 'AppModules',
+      title: '访问控制设置',
     },
   },
   /**
@@ -57,7 +57,7 @@ const routes: RouteRecordRaw[] = [
     name: 'app-module-list',
     component: () => import('@/components/AppModulesLists.vue'),
     meta: {
-      title: 'AppModulesLists',
+      title: '访问控制列表',
     },
   },
   {
