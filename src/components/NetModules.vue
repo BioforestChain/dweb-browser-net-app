@@ -20,7 +20,7 @@ import { showConfirmDialog } from 'vant'
 
 defineProps<{ msg: string }>()
 
-const tagType = ref('warning')
+const tagType = ref(GetUseUserStore.currentNetModuleConnectionStatus)
 const useRouteObj = useRoute()
 
 const idValue = ref(0)
@@ -79,8 +79,9 @@ function showConnStatusMsg(wsRes: { success: boolean; message: string }) {
 //回填
 getCache(GetNetModuleIdValue).then(async (existingValue: any) => {
   console.log(GetDateStr + ' init existingValue: ', existingValue)
-  if (existingValue[0].id > 0) {
-    paddingDataForm(existingValue[0], existingValue[0].id)
+  if (!existingValue.success && typeof existingValue[0] !== 'undefined') {
+    if (existingValue[0].hasOwnProperty('id') && existingValue[0].id)
+      paddingDataForm(existingValue[0], existingValue[0].id)
   }
 })
 
@@ -99,34 +100,32 @@ async function postNetModuleForm(values: NetForm) {
           net_list.push(res.data)
         } else {
           const index = net_list.findIndex((item) => item.id == res.data.id)
-          //遍历存在的 然后当下提交的是最新的，若有相同的id覆盖之
-          if (index !== -1) {
-            net_list[index] = res.data
-          } else {
-            //否则新增
-            net_list.push(res.data)
-          }
+          //遍历存在的 然后当下提交的是最新的，若有相同的id覆盖之 //否则新增
+          index !== -1 ? (net_list[index] = res.data) : net_list.push(res.data)
         }
         //Tips
         setCache(GetNetModuleIdValue, net_list).then(async () => {
           const wsRes = await reconnect<{ success: boolean; message: string }>()
           console.log(GetDateStr.value + ' ws res: ', wsRes)
           showConnStatusMsg(wsRes)
+          GetUseUserStore.currentNetModuleConnectionStatus = 'warning'
           if (wsRes.success) {
             $toast.open({
               message: '启动成功!',
               type: 'success',
               position: 'top',
             })
-            tagType.value = 'success'
+            GetUseUserStore.currentNetModuleConnectionStatus = 'success'
+            // tagType.value = GetUseUserStore.currentNetModuleConnectionStatus
           } else {
             $toast.open({
               message: '启动失败!',
               type: 'error',
               position: 'top',
             })
-            tagType.value = 'danger'
+            GetUseUserStore.currentNetModuleConnectionStatus = 'danger'
           }
+          tagType.value = GetUseUserStore.currentNetModuleConnectionStatus
         })
       })
       .catch((err) => console.error(err))
@@ -282,10 +281,11 @@ const onConnectNet = () => {
         position: 'top',
       })
       // 判断connect状态
-      tagType.value = 'danger'
+      GetUseUserStore.currentNetModuleConnectionStatus = 'danger'
       console.log('btnOnConnectNet on confirm')
       showLoading(true)
       showConnStatusMsg(shutdownRes)
+      tagType.value = GetUseUserStore.currentNetModuleConnectionStatus
     })
     .catch(() => {
       //
