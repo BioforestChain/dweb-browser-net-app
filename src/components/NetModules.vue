@@ -74,6 +74,9 @@ function showConnStatusMsg(wsRes: { success: boolean; message: string }) {
     span.className = 'red'
   }
   showLoading(false)
+  setTimeout(() => {
+    showMask(false)
+  }, 1000)
   span.innerText = wsRes.message
 }
 //回填
@@ -234,20 +237,37 @@ function paddingDataForm(element: any, queryId: any) {
 //新增
 let throttleBool = true //全局变量
 const onSubmit = (values: NetForm) => {
-  showLoading(true)
-  if (throttleBool) {
-    //第一次执行，之后1秒内不再执行
-    idValue.value = GetUseUserStore.currentNetModulePrimaryId
-    values.id = GetUseUserStore.currentNetModulePrimaryId
-    postNetModuleForm(values)
-    throttleBool = false
-    setTimeout(() => {
+  showConfirmDialog({
+    title: '提醒',
+    message: '是否启动连接？',
+    theme: 'round-button',
+    closeOnPopstate: true,
+  })
+    .then(async () => {
+      showLoading(true)
+      if (throttleBool) {
+        //第一次执行，之后1秒内不再执行
+        idValue.value = GetUseUserStore.currentNetModulePrimaryId
+        values.id = GetUseUserStore.currentNetModulePrimaryId
+        postNetModuleForm(values)
+        throttleBool = false
+        setTimeout(() => {
+          showLoading(false)
+          throttleBool = true
+        }, 1000)
+      } else {
+        console.log('不执行')
+      }
+    })
+    .catch(() => {
+      //
+      $toast.open({
+        message: '取消!',
+        type: 'error',
+        position: 'top',
+      })
       showLoading(false)
-      throttleBool = true
-    }, 1000)
-  } else {
-    console.log('不执行')
-  }
+    })
 }
 
 const onFailed = (errorInfo: NetForm[]) => {
@@ -283,7 +303,7 @@ const onConnectNet = () => {
       // 判断connect状态
       GetUseUserStore.currentNetModuleConnectionStatus = 'danger'
       console.log('btnOnConnectNet on confirm')
-      showLoading(true)
+
       showConnStatusMsg(shutdownRes)
       tagType.value = GetUseUserStore.currentNetModuleConnectionStatus
     })
@@ -308,7 +328,13 @@ const onConnectNet = () => {
 //     },
 //   })
 
+function showMask(display: boolean) {
+  const mask = document.getElementById('mask')!
+  display ? (mask.style.display = 'block') : (mask.style.display = 'none')
+}
+
 function showLoading(display: boolean) {
+  showMask(true)
   const load = document.getElementById('loading')!
   display ? (load.style.display = 'block') : (load.style.display = 'none')
 }
@@ -341,7 +367,9 @@ function onBlurInputPrefixBA() {
       left-arrow
       @click-left="onClickLeft"
     />
-    <van-form @failed="onFailed" @submit="onSubmit">
+    <!-- 遮罩层 -->
+    <div id="mask" />
+    <van-form id="net-form" @failed="onFailed" @submit="onSubmit">
       <van-cell-group inset>
         <div class="van-tag--mini tag-div">
           <!-- <van-tag round type="success"> 连接 </van-tag>
@@ -495,6 +523,19 @@ label {
   justify-content: center;
 }
 #loading {
+  display: none;
+}
+#net-form {
+  z-index: 1000;
+}
+#mask {
+  position: absolute;
+  top: 5%;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #00000080;
+  z-index: 999;
   display: none;
 }
 
