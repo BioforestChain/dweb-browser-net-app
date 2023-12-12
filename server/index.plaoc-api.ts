@@ -1,14 +1,15 @@
 import { Router } from '@plaoc/server/middleware'
 import { get, set, del } from 'idb-keyval'
 import { jsProcess } from '@dweb-browser/js-process'
-import Proxy from './proxy'
+import manifest from '../manifest.json'
+import proxy from './proxy'
 
 const app = new Router()
 
-const prefixpath = '/config.sys.dweb'
+const prefixpath = `/${manifest.id}`
 
 app.use(async (event) => {
-  console.log('api server:=>', event.request.url)
+  console.log('api server:=>', manifest.id, event, event.request.url)
 
   // 获取indexedDB数据
   if (event.pathname == `${prefixpath}/cache` && event.method == 'GET') {
@@ -56,13 +57,19 @@ app.use(async (event) => {
     event.pathname == `${prefixpath}/reconnection` &&
     event.method == 'POST'
   ) {
-    const result = await Proxy.restart()
+    const result = await proxy.restart()
     return Response.json(result)
   }
 
   // 断开websocket连接
   if (event.pathname == `${prefixpath}/reconnection` && event.method == 'PUT') {
-    const result = await Proxy.shutdown()
+    const result = await proxy.shutdown()
+    return Response.json(result)
+  }
+
+  // 检查websocket状态
+  if (event.pathname == `${prefixpath}/health` && event.method == 'GET') {
+    const result = await proxy.state()
     return Response.json(result)
   }
 
@@ -76,7 +83,5 @@ app.use(async (event) => {
 
   return Response.json({ success: true, message: 'api server ok' })
 })
-
-console.log('api init backend')
 
 export default app

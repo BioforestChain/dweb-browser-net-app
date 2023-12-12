@@ -1,4 +1,5 @@
 import request from '@/utils/http'
+import manifest from '../../../manifest.json'
 
 import type {
   NetForm,
@@ -82,9 +83,9 @@ export const apiAppModuleDel = (values: GetAppModuleId) => {
   })
 }
 
-import { ConfigPlugin } from '@plaoc/plugins'
+import { BasePlugin, $MMID } from '@plaoc/plugins'
 
-class IDB extends ConfigPlugin {
+class IDB extends BasePlugin {
   getApps<T>() {
     return this.fetchApi('/apps', { method: 'GET' }).object<T>()
   }
@@ -118,7 +119,7 @@ class IDB extends ConfigPlugin {
     return this.fetchApi('/cache', { method: 'DELETE', search: s }).object<T>()
   }
 }
-const iDB = new IDB()
+const iDB = new IDB(manifest.id as $MMID)
 
 export function getApps<T>(): Promise<T> {
   return iDB.getApps<T>()
