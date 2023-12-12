@@ -17,8 +17,11 @@ import {
   simpleEncoder,
   IpcResponse,
   IpcHeaders,
+  IpcEvent,
   $MMID,
   FetchEvent,
+  $IpcEvent,
+  $Ipc,
 } from '@dweb-browser/js-process'
 import manifest from '../manifest.json'
 
@@ -78,6 +81,8 @@ function initWs(url: string, mmid: $MMID) {
       WebsocketEvent.close,
       (_: Websocket, event: CloseEvent) => {
         console.error('ws close: ', event)
+
+        proxy.reset()
 
         try {
           proxyStream.controller.close()
@@ -186,16 +191,16 @@ async function haveApp(mmid: string, dstMmid: string): Promise<boolean> {
   return false
 }
 
-export default class Proxy {
+export class Proxy {
   constructor() {}
 
-  static #ipc: PromiseOut<$ReadableStreamIpc> = new PromiseOut()
+  #ipc: PromiseOut<$ReadableStreamIpc> = new PromiseOut()
 
-  static getIpc() {
-    return Proxy.#ipc.promise
+  getIpc(): PromiseOut<$ReadableStreamIpc> {
+    return this.#ipc
   }
 
-  private static async start() {
+  private async connect() {
     let wsState: boolean = false
     const netInfos = await get<NetInfo[] | undefined>(netConfigKey)
     if (!netInfos) {
@@ -221,9 +226,9 @@ export default class Proxy {
     let ipc: $ReadableStreamIpc
     try {
       ipc = await initWs(url, netConfigKey as $MMID)
-      Proxy.#ipc.resolve(ipc)
+      this.#ipc.resolve(ipc)
     } catch (err) {
-      Proxy.#ipc.reject(err)
+      this.#ipc.reject(err)
       console.error('init ws err: ', err)
       saveError(`init ws err: ${err}`)
       return wsState
@@ -231,17 +236,24 @@ export default class Proxy {
 
     wsState = true
 
+    // 监听 ws 推来的IpcRequest
     ipc
       .onFetch(async (event) => {
-        return await Proxy.forward(event, netInfo, ipc)
+        return await this.forwardIpcRequest(event, netInfo, ipc)
       })
       .forbidden()
       .cors()
 
+    // 监听 ws 推来的IpcEvent
+    ipc.onEvent((message, ipc) => {
+      console.log('aaaaaaa: ', message, ipc)
+      return this.forwardIpcEvent(message, ipc)
+    })
+
     return wsState
   }
 
-  private static async forward(
+  private async forwardIpcRequest(
     event: FetchEvent,
     netInfo: NetInfo,
     ipc: $ReadableStreamIpc,
@@ -262,7 +274,6 @@ export default class Proxy {
 
     // forwarding reqeusts
     const mmid = event.headers.get('X-Dweb-Host') as string
-
     console.log('forward request: ', url, mmid)
     if (!(await haveApp(netConfigKey, mmid))) {
       return IpcResponse.fromJson(
@@ -278,6 +289,7 @@ export default class Proxy {
     const u = `http://external.${mmid}:443${event.pathname}${event.search}`
 
     try {
+      // TODO 如果没安装mmid或权限原因，这里应该立即返回错误，但目前却会一直hanging，需要plaoc or dweb-browser修复
       const resp = await jsProcess.nativeFetch(u, {
         method: event.method,
         headers: event.headers,
@@ -299,14 +311,37 @@ export default class Proxy {
     }
   }
 
-  static async restart() {
-    await Proxy.close()
+  private async forwardIpcEvent(event: $IpcEvent, ipc: $Ipc) {
+    // 接收的IpcEvent.name 格式：appmmid_pubsubmmid_topic
+    const ns = event.name.split('.dweb_')
+    if (ns.length != 3) {
+      console.error('event name invalid: ', event.name)
+      return
+    }
 
-    Proxy.#ipc = new PromiseOut<$ReadableStreamIpc>()
+    // 转发给下个模块的IpcEvent.data格式：
+    // const data = {
+    //   topic: 'xxxx',
+    //   data: event.data
+    // }
+    const data = {
+      topic: `${ns[0]}.dweb_${ns[2]}`,
+      data: event.data,
+    }
+
+    const pubsubMMID: $MMID = `${ns[1]}.dweb`
+    const targetIpc = await jsProcess.connect(pubsubMMID)
+    // TODO 这里写activity是由于dweb_browser目前只有这个途径使用event，后续改进后这里应该使用topic
+    const ipcEvent = IpcEvent.fromText('activity', JSON.stringify(data))
+    targetIpc.postMessage(ipcEvent)
+  }
+
+  async restart() {
+    await this.close()
 
     let result = false
     try {
-      result = await Proxy.start()
+      result = await this.connect()
     } catch (error) {
       console.error('restart ipc: ', error)
     }
@@ -315,16 +350,43 @@ export default class Proxy {
     return { success: result, message: msg }
   }
 
-  static async shutdown() {
-    await Proxy.close()
-
+  async shutdown() {
+    await this.close()
     return { success: true, message: '已关闭' }
   }
 
-  private static async close() {
+  private async close() {
     if (wsInstance.is_finished) {
       const ws = await wsInstance.promise
       ws.close()
     }
+
+    this.reset()
+  }
+
+  reset() {
+    this.#ipc = new PromiseOut<$ReadableStreamIpc>()
+  }
+
+  state() {
+    let code = 0
+    let message = 'No connection'
+    if (this.#ipc.is_resolved) {
+      code = 1
+      message = 'Successful connection'
+    }
+
+    if (this.#ipc.is_rejected) {
+      code = 2
+      message = 'Connection failed'
+    }
+
+    // code = 0 未连接
+    // code = 1 连接成功
+    // code = 2 连接失败
+    return { success: true, data: { code: code }, message: message }
   }
 }
+
+const proxy = new Proxy()
+export default proxy

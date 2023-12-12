@@ -29,9 +29,9 @@
   "dependencies": {
     "@bassist/progress": "^0.2.2",
     "@bassist/utils": "^0.13.0",
-    "@dweb-browser/js-process": "^0.1.4",
-    "@plaoc/plugins": "^0.4.2",
-    "@plaoc/server": "^0.0.7",
+    "@dweb-browser/js-process": "^0.1.7",
+    "@plaoc/plugins": "^0.4.6",
+    "@plaoc/server": "^0.1.1",
     "@vueuse/core": "^10.5.0",
     "axios": "^1.5.1",
     "idb-keyval": "^6.2.1",
@@ -40,8 +40,8 @@
     "vant": "^4.7.2",
     "vue": "^3.3.4",
     "vue-router": "^4.2.5",
-    "websocket-ts": "^2.1.5",
-    "vue-toast-notification": "^3.1.2"
+    "vue-toast-notification": "^3.1.2",
+    "websocket-ts": "^2.1.5"
   },
   "devDependencies": {
     "@babel/types": "^7.23.0",
