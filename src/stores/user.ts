@@ -7,6 +7,7 @@ interface State {
   currentNetModulePrimaryId: number
   currentNetModuleDomain: string
   currentNetModuleId: string
+  currentNetModuleConnectionStatus: string
 }
 
 export const useUserStore = defineStore('userStore', {
@@ -20,6 +21,7 @@ export const useUserStore = defineStore('userStore', {
       currentNetModulePrimaryId: 0,
       currentNetModuleDomain: '',
       currentNetModuleId: '',
+      currentNetModuleConnectionStatus: 'warning',
     }
   },
   actions: {
