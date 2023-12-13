@@ -342,10 +342,6 @@ async function getHealthState() {
         return (tagType.value = 'warning')
       case 1:
         GetUseUserStore.currentNetModuleConnectionStatus = 'success'
-        console.log(
-          GetDateStr.value + ' health currentNetModuleConnectionStatus: ',
-          GetUseUserStore.currentNetModuleConnectionStatus,
-        )
         span.className = 'green'
         return (tagType.value = 'success')
       case 2:
