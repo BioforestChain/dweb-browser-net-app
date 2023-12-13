@@ -83,6 +83,10 @@ function showConnStatusMsg(wsRes: { success: boolean; message: string }) {
 getCache(GetNetModuleIdValue).then(async (existingValue: any) => {
   console.log(GetDateStr + ' init existingValue: ', existingValue)
   if (!existingValue.success && typeof existingValue[0] !== 'undefined') {
+    if (GetUseUserStore.currentNetModulePrimaryId == 0) {
+      GetUseUserStore.currentNetModulePrimaryId = existingValue[0].id
+    }
+
     if (existingValue[0].hasOwnProperty('id') && existingValue[0].id)
       paddingDataForm(existingValue[0], existingValue[0].id)
   }
@@ -91,6 +95,7 @@ getCache(GetNetModuleIdValue).then(async (existingValue: any) => {
 async function postNetModuleForm(values: NetForm) {
   const res = await apiNetModuleReg(values)
   if (res.code == 0 && res.data.id > 0) {
+    console.log(GetDateStr + ' postNetModuleForm res', res)
     res.data.secret = keyValue.value
     if (GetUseUserStore.currentNetModulePrimaryId == 0) {
       GetUseUserStore.currentNetModulePrimaryId = res.data.id
