@@ -8,6 +8,7 @@ import {
   getCache,
   reconnect,
   shutdown,
+  health,
 } from '@/api/user'
 import { useRoute } from 'vue-router'
 import { GetNetModuleIdValue, GetUseUserStore } from '@/types'
@@ -324,6 +325,39 @@ const onConnectNet = () => {
       console.log('btnOnConnectNet on cancel')
     })
 }
+async function getHealthState() {
+  const healthRes = await health<{
+    success: boolean
+    data: { code: number }
+    message: string
+  }>()
+  console.log(GetDateStr.value + ' health res: ', healthRes)
+  const span = document.getElementById('showConnStatusMsg')!
+  if (healthRes.success) {
+    span.innerText = healthRes.message
+    switch (healthRes.data.code) {
+      case 0:
+        GetUseUserStore.currentNetModuleConnectionStatus = 'warning'
+        span.className = 'orange'
+        return (tagType.value = 'warning')
+      case 1:
+        GetUseUserStore.currentNetModuleConnectionStatus = 'success'
+        console.log(
+          GetDateStr.value + ' health currentNetModuleConnectionStatus: ',
+          GetUseUserStore.currentNetModuleConnectionStatus,
+        )
+        span.className = 'green'
+        return (tagType.value = 'success')
+      case 2:
+        GetUseUserStore.currentNetModuleConnectionStatus = 'danger'
+        span.className = 'red'
+        return (tagType.value = 'danger')
+    }
+  }
+}
+// light state
+setInterval(getHealthState, 3000)
+
 // TODO
 // function handleEdit(id: number) {
 //   router.push({
@@ -567,5 +601,8 @@ code {
 }
 .red {
   color: #ef4444;
+}
+.orange {
+  color: orange;
 }
 </style>
