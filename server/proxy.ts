@@ -250,6 +250,16 @@ export class Proxy {
       return this.forwardIpcEvent(message, ipc)
     })
 
+    // ipc.onStream((message, ipc)=>{
+    //   console.log("ipc.onStream: ", message, ipc)
+    //   // ipc.postMessage(event.ipcRequest)
+    // })
+
+    // ipc.onEvent((message: $IpcEvent, ipc: $Ipc)=>{
+    //   console.log("ipc.onEvent: ", message, ipc)
+    //   ipc.postMessage(event.ipcRequest)
+    // })
+
     return wsState
   }
 
@@ -312,27 +322,22 @@ export class Proxy {
   }
 
   private async forwardIpcEvent(event: $IpcEvent, ipc: $Ipc) {
-    // 接收的IpcEvent.name 格式：appmmid_pubsubmmid_topic
-    const ns = event.name.split('.dweb_')
-    if (ns.length != 3) {
-      console.error('event name invalid: ', event.name)
-      return
-    }
-
-    // 转发给下个模块的IpcEvent.data格式：
-    // const data = {
-    //   topic: 'xxxx',
-    //   data: event.data
+    // IpcEvent.data数据格式：
+    // IpcEvent.data = {
+    //   headers: {
+    //       "X-Dweb-Host": "xxx.dweb"， // 必填，网络模块转发的下个模块mmid；发布订阅模式下，就是发布订阅模块mmid
+    //       "X-Dweb-Pubsub-App": "xxx.dweb", // 选填，发布订阅模式下，是使用发布订阅模块的mmid
+    //    },
+    //   body: {
+    //       topic: "xxx" // 必填，订阅的主题
+    //       data：string | []byte ， // 必填，发布的数据
+    //   }
     // }
-    const data = {
-      topic: `${ns[0]}.dweb_${ns[2]}`,
-      data: event.data,
-    }
-
-    const pubsubMMID: $MMID = `${ns[1]}.dweb`
-    const targetIpc = await jsProcess.connect(pubsubMMID)
+    const eventData = JSON.parse(event.text) as EventData
+    const proxiedMMID = eventData.headers['X-Dweb-Host'] as $MMID
+    const targetIpc = await jsProcess.connect(proxiedMMID)
     // TODO 这里写activity是由于dweb_browser目前只有这个途径使用event，后续改进后这里应该使用topic
-    const ipcEvent = IpcEvent.fromText('activity', JSON.stringify(data))
+    const ipcEvent = IpcEvent.fromText('activity', event.text)
     targetIpc.postMessage(ipcEvent)
   }
 
@@ -389,4 +394,16 @@ export class Proxy {
 }
 
 const proxy = new Proxy()
+
+type EventData = {
+  headers: {
+    'X-Dweb-Host': string
+    'X-Dweb-Pubsub-App'?: string
+  }
+  body: {
+    topic: string
+    data: string | Uint8Array
+  }
+}
+
 export default proxy
