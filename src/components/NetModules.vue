@@ -20,7 +20,7 @@ import { showConfirmDialog } from 'vant'
 
 defineProps<{ msg: string }>()
 
-const tagType = ref('warning')
+const tagType = ref(GetUseUserStore.currentNetModuleConnectionStatus)
 const useRouteObj = useRoute()
 
 const idValue = ref(0)
@@ -74,13 +74,17 @@ function showConnStatusMsg(wsRes: { success: boolean; message: string }) {
     span.className = 'red'
   }
   showLoading(false)
+  setTimeout(() => {
+    showMask(false)
+  }, 1000)
   span.innerText = wsRes.message
 }
 //回填
 getCache(GetNetModuleIdValue).then(async (existingValue: any) => {
   console.log(GetDateStr + ' init existingValue: ', existingValue)
-  if (existingValue[0].id > 0) {
-    paddingDataForm(existingValue[0], existingValue[0].id)
+  if (!existingValue.success && typeof existingValue[0] !== 'undefined') {
+    if (existingValue[0].hasOwnProperty('id') && existingValue[0].id)
+      paddingDataForm(existingValue[0], existingValue[0].id)
   }
 })
 
@@ -99,34 +103,32 @@ async function postNetModuleForm(values: NetForm) {
           net_list.push(res.data)
         } else {
           const index = net_list.findIndex((item) => item.id == res.data.id)
-          //遍历存在的 然后当下提交的是最新的，若有相同的id覆盖之
-          if (index !== -1) {
-            net_list[index] = res.data
-          } else {
-            //否则新增
-            net_list.push(res.data)
-          }
+          //遍历存在的 然后当下提交的是最新的，若有相同的id覆盖之 //否则新增
+          index !== -1 ? (net_list[index] = res.data) : net_list.push(res.data)
         }
         //Tips
         setCache(GetNetModuleIdValue, net_list).then(async () => {
           const wsRes = await reconnect<{ success: boolean; message: string }>()
           console.log(GetDateStr.value + ' ws res: ', wsRes)
           showConnStatusMsg(wsRes)
+          GetUseUserStore.currentNetModuleConnectionStatus = 'warning'
           if (wsRes.success) {
             $toast.open({
               message: '启动成功!',
               type: 'success',
               position: 'top',
             })
-            tagType.value = 'success'
+            GetUseUserStore.currentNetModuleConnectionStatus = 'success'
+            // tagType.value = GetUseUserStore.currentNetModuleConnectionStatus
           } else {
             $toast.open({
               message: '启动失败!',
               type: 'error',
               position: 'top',
             })
-            tagType.value = 'danger'
+            GetUseUserStore.currentNetModuleConnectionStatus = 'danger'
           }
+          tagType.value = GetUseUserStore.currentNetModuleConnectionStatus
         })
       })
       .catch((err) => console.error(err))
@@ -235,20 +237,37 @@ function paddingDataForm(element: any, queryId: any) {
 //新增
 let throttleBool = true //全局变量
 const onSubmit = (values: NetForm) => {
-  showLoading(true)
-  if (throttleBool) {
-    //第一次执行，之后1秒内不再执行
-    idValue.value = GetUseUserStore.currentNetModulePrimaryId
-    values.id = GetUseUserStore.currentNetModulePrimaryId
-    postNetModuleForm(values)
-    throttleBool = false
-    setTimeout(() => {
+  showConfirmDialog({
+    title: '提醒',
+    message: '是否启动连接？',
+    theme: 'round-button',
+    closeOnPopstate: true,
+  })
+    .then(async () => {
+      showLoading(true)
+      if (throttleBool) {
+        //第一次执行，之后1秒内不再执行
+        idValue.value = GetUseUserStore.currentNetModulePrimaryId
+        values.id = GetUseUserStore.currentNetModulePrimaryId
+        postNetModuleForm(values)
+        throttleBool = false
+        setTimeout(() => {
+          showLoading(false)
+          throttleBool = true
+        }, 1000)
+      } else {
+        console.log('不执行')
+      }
+    })
+    .catch(() => {
+      //
+      $toast.open({
+        message: '取消!',
+        type: 'error',
+        position: 'top',
+      })
       showLoading(false)
-      throttleBool = true
-    }, 1000)
-  } else {
-    console.log('不执行')
-  }
+    })
 }
 
 const onFailed = (errorInfo: NetForm[]) => {
@@ -282,10 +301,11 @@ const onConnectNet = () => {
         position: 'top',
       })
       // 判断connect状态
-      tagType.value = 'danger'
+      GetUseUserStore.currentNetModuleConnectionStatus = 'danger'
       console.log('btnOnConnectNet on confirm')
-      showLoading(true)
+
       showConnStatusMsg(shutdownRes)
+      tagType.value = GetUseUserStore.currentNetModuleConnectionStatus
     })
     .catch(() => {
       //
@@ -308,7 +328,13 @@ const onConnectNet = () => {
 //     },
 //   })
 
+function showMask(display: boolean) {
+  const mask = document.getElementById('mask')!
+  display ? (mask.style.display = 'block') : (mask.style.display = 'none')
+}
+
 function showLoading(display: boolean) {
+  showMask(true)
   const load = document.getElementById('loading')!
   display ? (load.style.display = 'block') : (load.style.display = 'none')
 }
@@ -341,7 +367,9 @@ function onBlurInputPrefixBA() {
       left-arrow
       @click-left="onClickLeft"
     />
-    <van-form @failed="onFailed" @submit="onSubmit">
+    <!-- 遮罩层 -->
+    <div id="mask" />
+    <van-form id="net-form" @failed="onFailed" @submit="onSubmit">
       <van-cell-group inset>
         <div class="van-tag--mini tag-div">
           <!-- <van-tag round type="success"> 连接 </van-tag>
@@ -495,6 +523,19 @@ label {
   justify-content: center;
 }
 #loading {
+  display: none;
+}
+#net-form {
+  z-index: 1000;
+}
+#mask {
+  position: absolute;
+  top: 5%;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #00000080;
+  z-index: 999;
   display: none;
 }
 
