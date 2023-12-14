@@ -98,6 +98,10 @@ class IDB extends BasePlugin {
     return this.fetchApi('/reconnection', { method: 'PUT' }).object<T>()
   }
 
+  health<T>() {
+    return this.fetchApi('/health', { method: 'GET' }).object<T>()
+  }
+
   get<T>(keyVal: string) {
     const s = new URLSearchParams()
     s.set('key', keyVal)
@@ -131,6 +135,9 @@ export function reconnect<T>(): Promise<T> {
 
 export function shutdown<T>(): Promise<T> {
   return iDB.shutdown<T>()
+}
+export function health<T>(): Promise<T> {
+  return iDB.health<T>()
 }
 
 export function getCache<T>(keyVal: string): Promise<T> {

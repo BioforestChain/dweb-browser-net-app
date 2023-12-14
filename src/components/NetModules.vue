@@ -8,6 +8,7 @@ import {
   getCache,
   reconnect,
   shutdown,
+  health,
 } from '@/api/user'
 import { useRoute } from 'vue-router'
 import { GetNetModuleIdValue, GetUseUserStore } from '@/types'
@@ -83,6 +84,10 @@ function showConnStatusMsg(wsRes: { success: boolean; message: string }) {
 getCache(GetNetModuleIdValue).then(async (existingValue: any) => {
   console.log(GetDateStr + ' init existingValue: ', existingValue)
   if (!existingValue.success && typeof existingValue[0] !== 'undefined') {
+    if (GetUseUserStore.currentNetModulePrimaryId == 0) {
+      GetUseUserStore.currentNetModulePrimaryId = existingValue[0].id
+    }
+
     if (existingValue[0].hasOwnProperty('id') && existingValue[0].id)
       paddingDataForm(existingValue[0], existingValue[0].id)
   }
@@ -91,6 +96,7 @@ getCache(GetNetModuleIdValue).then(async (existingValue: any) => {
 async function postNetModuleForm(values: NetForm) {
   const res = await apiNetModuleReg(values)
   if (res.code == 0 && res.data.id > 0) {
+    console.log(GetDateStr + ' postNetModuleForm res', res)
     res.data.secret = keyValue.value
     if (GetUseUserStore.currentNetModulePrimaryId == 0) {
       GetUseUserStore.currentNetModulePrimaryId = res.data.id
@@ -319,6 +325,35 @@ const onConnectNet = () => {
       console.log('btnOnConnectNet on cancel')
     })
 }
+async function getHealthState() {
+  const healthRes = await health<{
+    success: boolean
+    data: { code: number }
+    message: string
+  }>()
+  console.log(GetDateStr.value + ' health res: ', healthRes)
+  const span = document.getElementById('showConnStatusMsg')!
+  if (healthRes.success) {
+    span.innerText = healthRes.message
+    switch (healthRes.data.code) {
+      case 0:
+        GetUseUserStore.currentNetModuleConnectionStatus = 'warning'
+        span.className = 'orange'
+        return (tagType.value = 'warning')
+      case 1:
+        GetUseUserStore.currentNetModuleConnectionStatus = 'success'
+        span.className = 'green'
+        return (tagType.value = 'success')
+      case 2:
+        GetUseUserStore.currentNetModuleConnectionStatus = 'danger'
+        span.className = 'red'
+        return (tagType.value = 'danger')
+    }
+  }
+}
+// light state
+setInterval(getHealthState, 3000)
+
 // TODO
 // function handleEdit(id: number) {
 //   router.push({
@@ -562,5 +597,8 @@ code {
 }
 .red {
   color: #ef4444;
+}
+.orange {
+  color: orange;
 }
 </style>
