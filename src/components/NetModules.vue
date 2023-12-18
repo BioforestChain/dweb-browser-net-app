@@ -331,7 +331,7 @@ async function getHealthState() {
     data: { code: number }
     message: string
   }>()
-  console.log(GetDateStr.value + ' health res: ', healthRes)
+  // console.log(GetDateStr.value + ' health res: ', healthRes)
   const span = document.getElementById('showConnStatusMsg')!
   if (healthRes.success) {
     span.innerText = healthRes.message

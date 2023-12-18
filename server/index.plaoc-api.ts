@@ -9,7 +9,7 @@ const app = new Router()
 const prefixpath = `/${manifest.id}`
 
 app.use(async (event) => {
-  console.log('api server:=>', manifest.id, event, event.request.url)
+  // console.log('api server:=>', manifest.id, event, event.request.url)
 
   // 获取indexedDB数据
   if (event.pathname == `${prefixpath}/cache` && event.method == 'GET') {
