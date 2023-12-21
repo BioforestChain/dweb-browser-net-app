@@ -25,7 +25,7 @@ const tagType = ref(GetUseUserStore.currentNetModuleConnectionStatus)
 const useRouteObj = useRoute()
 
 const idValue = ref(0)
-const domainValue = ref('') //服务地址
+const serverAddrValue = ref('') //服务地址
 const portValue = ref(80)
 const keyValue = ref('')
 const prefixBroadcastAddressValue = ref('')
@@ -46,7 +46,7 @@ const portFormatter = (value: string) => {
   return value.replace(/[^0-9]/gi, '')
 }
 // 服务地址格式化
-const rootDomainFormatter = (value: string) => {
+const serverAddrFormatter = (value: string) => {
   if (/[^a-z.\d]/i.test(value)) {
     return ''
   } else {
@@ -229,11 +229,11 @@ async function GetNetModuleDetail(queryId: any) {
 function paddingDataForm(element: any, queryId: any) {
   const targetItem = element
   idValue.value = queryId
-  domainValue.value = targetItem.domain
+  serverAddrValue.value = targetItem.domain
   portValue.value = targetItem.port
   keyValue.value = targetItem.secret
   prefixBroadcastAddressValue.value = targetItem.prefix_broadcast_address
-  suffixBroadcastAddressValue.value = getSuffixDomain(domainValue.value)
+  suffixBroadcastAddressValue.value = getSuffixDomain(serverAddrValue.value)
   broadcastAddressValue.value =
     prefixBroadcastAddressValue.value + suffixBroadcastAddressValue.value
 }
@@ -422,15 +422,15 @@ function onBlurInputPrefixBA() {
           name="broadcast_address"
         />
         <van-field
-          v-model="domainValue"
+          v-model="serverAddrValue"
           type="text"
-          :formatter="rootDomainFormatter"
+          :formatter="serverAddrFormatter"
           label="服务地址(address):"
           placeholder="请输入网络服务地址"
-          name="domain"
+          name="server_addr"
           required
           :rules="[{ required: true, validator: patternRootDomain }]"
-          @blur="getSuffixDomain(domainValue)"
+          @blur="getSuffixDomain(serverAddrValue)"
         />
         <van-field
           v-model="portValue"
@@ -473,7 +473,7 @@ function onBlurInputPrefixBA() {
         <van-field
           v-model="GetNetModuleIdValue"
           label="网络模块id:"
-          :formatter="rootDomainFormatter"
+          :formatter="serverAddrFormatter"
           type="text"
           placeholder="请输入"
           name="netId"

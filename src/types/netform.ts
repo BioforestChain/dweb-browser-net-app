@@ -9,7 +9,7 @@ export const GetNetModuleIdValue = GetNetModuleIdFromCfg.value
 export const GetUseUserStore: any = useUserStore()
 export interface NetForm {
   id: number
-  domain: string
+  serverAddr: string
   netID: string
   rootDomain: string
   secret: string
