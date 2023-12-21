@@ -185,11 +185,9 @@ async function editNetForm(queryId: any) {
     editFormArr.forEach((element) => {
       if (element.id == queryId) {
         paddingDataForm(element, queryId)
-        // GetNetModuleDetail(queryId)
       } else {
         // GetNetModuleDetail(queryId)
       }
-      // paddingDataForm(element, queryId)
     })
     // editFormArr.forEach((element) => {
     //   if (element.id == queryId) {
