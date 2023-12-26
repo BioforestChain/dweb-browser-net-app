@@ -250,16 +250,6 @@ export class Proxy {
       return this.forwardIpcEvent(message, ipc)
     })
 
-    // ipc.onStream((message, ipc)=>{
-    //   console.log("ipc.onStream: ", message, ipc)
-    //   // ipc.postMessage(event.ipcRequest)
-    // })
-
-    // ipc.onEvent((message: $IpcEvent, ipc: $Ipc)=>{
-    //   console.log("ipc.onEvent: ", message, ipc)
-    //   ipc.postMessage(event.ipcRequest)
-    // })
-
     return wsState
   }
 
