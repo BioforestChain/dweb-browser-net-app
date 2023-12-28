@@ -1,5 +1,5 @@
 import request from '@/utils/http'
-import manifest from '../../../manifest.json'
+import iDB from '@/utils/cache'
 
 import type {
   NetForm,
@@ -82,48 +82,6 @@ export const apiAppModuleDel = (values: GetAppModuleId) => {
     data: values,
   })
 }
-
-import { BasePlugin, $MMID } from '@plaoc/plugins'
-
-class IDB extends BasePlugin {
-  getApps<T>() {
-    return this.fetchApi('/apps', { method: 'GET' }).object<T>()
-  }
-
-  reconnect<T>() {
-    return this.fetchApi('/reconnection', { method: 'POST' }).object<T>()
-  }
-
-  shutdown<T>() {
-    return this.fetchApi('/reconnection', { method: 'PUT' }).object<T>()
-  }
-
-  health<T>() {
-    return this.fetchApi('/health', { method: 'GET' }).object<T>()
-  }
-
-  get<T>(keyVal: string) {
-    const s = new URLSearchParams()
-    s.set('key', keyVal)
-    return this.fetchApi('/cache', { method: 'GET', search: s }).object<T>()
-  }
-
-  set<T>(key: string, val: any) {
-    return this.fetchApi('/cache', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ [key]: val }),
-    }).object<T>()
-  }
-
-  del<T>(keyVal: string) {
-    const s = new URLSearchParams()
-    s.set('key', keyVal)
-
-    return this.fetchApi('/cache', { method: 'DELETE', search: s }).object<T>()
-  }
-}
-const iDB = new IDB(manifest.id as $MMID)
 
 export function getApps<T>(): Promise<T> {
   return iDB.getApps<T>()

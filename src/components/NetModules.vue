@@ -14,10 +14,7 @@ import { useRoute } from 'vue-router'
 import { GetNetModuleIdValue, GetUseUserStore } from '@/types'
 import { GetDateStr, $toast } from '@/types'
 import { showConfirmDialog } from 'vant'
-// import { del,
-//   get as getCache,
-//   set as setCache
-// } from 'idb-keyval'
+import { priPubCacheKey } from '@/utils/crypto'
 
 defineProps<{ msg: string }>()
 
@@ -240,7 +237,22 @@ function paddingDataForm(element: any, queryId: any) {
 
 //新增
 let throttleBool = true //全局变量
-const onSubmit = (values: NetForm) => {
+const onSubmit = async (values: NetForm) => {
+  // TODO 公钥不应该从缓存里取，后续要从dweb_browser的秘钥管理器里取
+  // 这里只是为了测试
+  const priPubKey = await getCache<string[]>(priPubCacheKey)
+  if (priPubKey.length != 2) {
+    showConfirmDialog({
+      title: '提醒',
+      message: '公私钥未生成',
+      theme: 'round-button',
+      closeOnPopstate: true,
+    })
+    return
+  }
+
+  values.publicKey = priPubKey[1]
+
   showConfirmDialog({
     title: '提醒',
     message: '是否启动连接？',

@@ -24,6 +24,7 @@ import {
   $Ipc,
 } from '@dweb-browser/js-process'
 import manifest from '../manifest.json'
+import { makeSignature } from './crypto'
 
 let wsInstance: PromiseOut<Websocket> = new PromiseOut()
 
@@ -214,12 +215,14 @@ export class Proxy {
       return wsState
     }
 
+    const signature = makeSignature(netInfo.broadcast_address)
+
     let url: string
     // TODO for test
     if (netInfo.broadcast_address == 'c.b.com') {
-      url = `ws://127.0.0.1:${netInfo.port}/proxy/ws?secret=${netInfo.secret}&client_id=${netInfo.broadcast_address}&domain=${netInfo.broadcast_address}`
+      url = `ws://127.0.0.1:${netInfo.port}/proxy/ws?secret=${netInfo.secret}&client_id=${netInfo.broadcast_address}&s=${signature}`
     } else {
-      url = `ws://${netInfo.domain}:${netInfo.port}/proxy/ws?secret=${netInfo.secret}&client_id=${netInfo.broadcast_address}&domain=${netInfo.broadcast_address}`
+      url = `ws://${netInfo.domain}:${netInfo.port}/proxy/ws?secret=${netInfo.secret}&client_id=${netInfo.broadcast_address}&s=${signature}`
     }
 
     // const url = 'ws://127.0.0.1:8000/proxy/ws?secret=111&client_id=test.bn.com&domain=test.bn.com'

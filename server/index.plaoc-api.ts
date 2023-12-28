@@ -3,6 +3,7 @@ import { get, set, del } from 'idb-keyval'
 import { jsProcess } from '@dweb-browser/js-process'
 import manifest from '../manifest.json'
 import proxy from './proxy'
+import { checkOrCreateKey, testCodec } from './crypto'
 
 const app = new Router()
 
@@ -83,5 +84,13 @@ app.use(async (event) => {
 
   return Response.json({ success: true, message: 'api server ok' })
 })
+
+// 检查是否已生成公私钥
+
+const codec = async () => {
+  await checkOrCreateKey()
+  await testCodec()
+}
+codec()
 
 export default app
