@@ -109,30 +109,8 @@ async function postNetModuleForm(values: NetForm) {
           //遍历存在的 然后当下提交的是最新的，若有相同的id覆盖之 //否则新增
           index !== -1 ? (net_list[index] = res.data) : net_list.push(res.data)
         }
-        //Tips
-        setCache(GetNetModuleIdValue, net_list).then(async () => {
-          const wsRes = await reconnect<{ success: boolean; message: string }>()
-          console.log(GetDateStr.value + ' ws res: ', wsRes)
-          showConnStatusMsg(wsRes)
-          GetUseUserStore.currentNetModuleConnectionStatus = 'warning'
-          if (wsRes.success) {
-            $toast.open({
-              message: '启动成功!',
-              type: 'success',
-              position: 'top',
-            })
-            GetUseUserStore.currentNetModuleConnectionStatus = 'success'
-            // tagType.value = GetUseUserStore.currentNetModuleConnectionStatus
-          } else {
-            $toast.open({
-              message: '启动失败!',
-              type: 'error',
-              position: 'top',
-            })
-            GetUseUserStore.currentNetModuleConnectionStatus = 'danger'
-          }
-          tagType.value = GetUseUserStore.currentNetModuleConnectionStatus
-        })
+        //启动连接  onConnectNet
+        onConnectNet()
       })
       .catch((err) => console.error(err))
 
@@ -153,6 +131,33 @@ async function postNetModuleForm(values: NetForm) {
       position: 'top',
     })
   }
+}
+
+function onConnectNet() {
+  //启动连接操作
+  setCache(GetNetModuleIdValue, net_list).then(async () => {
+    const wsRes = await reconnect<{ success: boolean; message: string }>()
+    console.log(GetDateStr.value + ' ws res: ', wsRes)
+    showConnStatusMsg(wsRes)
+    GetUseUserStore.currentNetModuleConnectionStatus = 'warning'
+    if (wsRes.success) {
+      $toast.open({
+        message: '启动成功!',
+        type: 'success',
+        position: 'top',
+      })
+      GetUseUserStore.currentNetModuleConnectionStatus = 'success'
+      // tagType.value = GetUseUserStore.currentNetModuleConnectionStatus
+    } else {
+      $toast.open({
+        message: '启动失败!',
+        type: 'error',
+        position: 'top',
+      })
+      GetUseUserStore.currentNetModuleConnectionStatus = 'danger'
+    }
+    tagType.value = GetUseUserStore.currentNetModuleConnectionStatus
+  })
 }
 
 // TODO 编辑
@@ -298,7 +303,7 @@ const onFailed = (errorInfo: NetForm[]) => {
 //nav-bar
 const onClickLeft = () => history.back()
 
-const onConnectNet = () => {
+const onDisconnectNet = () => {
   showConfirmDialog({
     title: '提醒',
     message: '是否断开连接？',
@@ -318,7 +323,7 @@ const onConnectNet = () => {
       })
       // 判断connect状态
       GetUseUserStore.currentNetModuleConnectionStatus = 'danger'
-      console.log('btnOnConnectNet on confirm')
+      console.log('btnonDisconnectNet on confirm')
 
       showConnStatusMsg(shutdownRes)
       tagType.value = GetUseUserStore.currentNetModuleConnectionStatus
@@ -332,7 +337,7 @@ const onConnectNet = () => {
       })
       showLoading(false)
       // tagType.value = 'success'
-      console.log('btnOnConnectNet on cancel')
+      console.log('btnonDisconnectNet on cancel')
     })
 }
 async function getHealthState() {
@@ -500,7 +505,7 @@ function onBlurInputPrefixBA() {
         <van-loading id="loading" type="spinner" color="#1989fa" />
       </div>
       <div class="button-container">
-        <van-button type="danger" round block @click="onConnectNet">
+        <van-button type="danger" round block @click="onDisconnectNet">
           断开连接
         </van-button>
         <van-button

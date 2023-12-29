@@ -215,11 +215,11 @@ export class Proxy {
       return wsState
     }
 
-    const signature = makeSignature(netInfo.broadcast_address)
-
+    const signatureSrc = await makeSignature(netInfo.broadcast_address)
+    const signature = encodeURIComponent(signatureSrc as string)
     let url: string
     // TODO for test
-    if (netInfo.broadcast_address == 'c.b.com') {
+    if (netInfo.broadcast_address == '1234567.b.com') {
       url = `ws://127.0.0.1:${netInfo.port}/proxy/ws?secret=${netInfo.secret}&client_id=${netInfo.broadcast_address}&s=${signature}`
     } else {
       url = `ws://${netInfo.domain}:${netInfo.port}/proxy/ws?secret=${netInfo.secret}&client_id=${netInfo.broadcast_address}&s=${signature}`

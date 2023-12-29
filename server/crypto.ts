@@ -30,7 +30,6 @@ async function generateRSAKeyPair() {
     // 将值转换为 Base64 编码的字符串
     const publicKeyText = arrayBufferToBase64(publicKeyData)
     const privateKeyText = arrayBufferToBase64(privateKeyData)
-
     return { publicKey: publicKeyText, privateKey: privateKeyText }
   } catch (error) {
     console.error('Error generating RSA key pair: ', error)

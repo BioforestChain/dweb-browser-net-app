@@ -38,7 +38,7 @@ app.use(async (event) => {
 
   // TODO 由于dweb browser的bug，这里写死header头，后续修复后需删除
   event.headers.append('X-Dweb-Host', 'netmodule.bagen.com.dweb')
-  event.headers.append('X-Dweb-Host-Domain', 'c.b.com') //bro_addr
+  event.headers.append('X-Dweb-Host-Domain', '1234567.b.com') //bro_addr
 
   event.headers.append('X-Dweb-Pubsub', 'pubsubmodule.bagen.com.dweb')
   event.headers.append('X-Dweb-Pubsub-App', `testmodule.bagen.com.dweb`)
